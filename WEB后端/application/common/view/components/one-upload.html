@@ -1,0 +1,10 @@
+<template id="one-upload">
+    <div class="one-upload" @click="handleClick">
+        <slot></slot>
+        <input ref="input" type="file" :accept="comAccept" :multiple="multiple" style="display: none"
+               @change="handleChange">
+    </div>
+</template>
+<script>
+    "use strict";Vue.component("one-upload",{template:"#one-upload",props:{disabled:Boolean,multiple:Boolean,max:Number,accept:String,params:Object,fields:Object},data:function(){return{dialogVisible:!1,loading:!0,attachments:[],checkedAttachments:[],files:[]}},created:function(){},methods:{handleClick:function(){this.disabled||(this.$refs.input.value=null,this.$refs.input.click())},handleChange:function(e){e.target.files&&this.uploadFiles(e.target.files)},uploadFiles:function(e){if(this.max&&e.length>this.max)return void this.$message.error("最多一次只能上传"+this.max+"个文件。");this.files=[];for(var t=0;t<e.length;t++){var i={_complete:!1,response:null,rawFile:e[t]};this.files.push(i)}this.$emit("start",this.files);for(var s in this.files)this.upload(this.files[s])},upload:function(e){var t=this,i=new FormData,s={};s.s="system/annex/upload";for(var a in this.params)s[a]=this.params[a];for(var n in this.fields)i.append(n,this.fields[n]);i.append("file",e.rawFile,e.rawFile.name),this.$request({headers:{"Content-Type":"multipart/form-data"},params:s,method:"post",data:i}).then(function(i){0!==i.data.code&&t.$message.error(i.data.msg),e.response=i,e._complete=!0,t.onSuccess(e)}).catch(function(t){e._complete=!0})},onSuccess:function(e){this.$emit("success",e);var t=!0;for(var i in this.files)if(!this.files[i]._complete){t=!1;break}t&&this.$emit("complete",this.files)}},computed:{comAccept:{get:function(){return"image"===this.accept?"image/*":"video"===this.accept?"video/*":"*/*"}}}});
+</script>

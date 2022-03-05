@@ -1,0 +1,307 @@
+{:runhook('system_admin_index')}
+<div v-cloak id="app" class="main-content">
+    <el-row :gutter="20">
+        <el-col span="6">
+            <el-card shadow="hover">
+                <div class="title">系统版本</div>
+                <div class="conetne">{:config('one.name')}-{:config('one.version')}</div>
+            </el-card>
+        </el-col>
+        <el-col span="6">
+            <el-card shadow="hover">
+                <div class="title">服务器环境</div>
+                <div class="conetne">{$Think.const.PHP_OS} / {$_SERVER["SERVER_SOFTWARE"]}</div>
+            </el-card>
+        </el-col>
+        <el-col span="6">
+            <el-card shadow="hover">
+                <div class="title">PHP/MySql版本</div>
+                <div class="conetne">{$Think.const.PHP_VERSION} / MySql {:db()->query('select version() as
+                    version')[0]['version']}</div>
+            </el-card>
+        </el-col>
+        <el-col span="6">
+            <el-card shadow="hover">
+                <div class="title">ThinkPHP版本</div>
+                <div class="conetne">{$Think.VERSION}</div>
+            </el-card>
+        </el-col>
+    </el-row>
+</div>
+{include file='common@components/one-tabs'}
+<script src="__STATIC__/js/icon.js?v=1.0.0"></script>
+<script src="__STATIC__/lib/echarts@5.1.1/echarts.min.js"></script>
+<script>
+    var option = {
+        title: {
+            text: ''
+        },
+        tooltip: {
+            trigger: 'axis'
+        },
+        grid: {
+            top: '12px',
+            left: '12px',
+            right: '12px',
+            bottom: '12px',
+            containLabel: true
+        },
+        xAxis: [{
+            type: 'category',
+            data: [],
+
+        }, {
+            type: 'category',
+            data: [],
+            offset: 0,
+            axisLabel: {
+                interval: 0,
+                // inside:true,
+                formatter: function (value) {
+                    let _data = value.split(",")
+                    // let abc = `${_data[1]}\n${_data[2]} ${_data[3]}\n`;
+                    let res = `{${_data[0]}|}\n${_data[1]}`;
+                    return res
+                },
+                rich: {
+                    //xue、lei、shachen、wu、bingbao、yun、yu、yin、qing
+                    xue: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/xue.png"
+                        }
+                    },
+                    lei: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/lei.png"
+                        }
+                    },
+                    shachen: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/shachen.png"
+                        }
+                    },
+                    wu: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/wu.png"
+                        }
+                    },
+                    bingbao: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/bingbao.png"
+                        }
+                    },
+                    yu: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/yu.png"
+                        }
+                    },
+                    yun: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/yun.png"
+                        }
+                    },
+                    yin: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/yin.png"
+                        }
+                    },
+                    qing: {
+                        height: 40,
+                        align: 'center',
+                        backgroundColor: {
+                            image: "/static/img/weather/qing.png"
+                        }
+                    },
+                }
+            }
+
+        }],
+        yAxis: {
+            type: 'value',
+            // max:50,
+            axisLabel: {
+                formatter: '{value} °C'
+            }
+        },
+        series: [{
+            name: '最高气温',
+            data: [20, 32, 91, 934, 290, 1330, 1320],
+            type: 'line',
+            smooth: true,
+            label: {
+                show: true,
+            }
+
+        }, {
+            name: '最低气温',
+            data: [20, 32, 91, 934, 290, 1330, 1320],
+            type: 'line',
+            smooth: true,
+            label: {
+                show: true,
+            }
+
+        }]
+    };
+
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                pagination: {
+                    totalRows: 0, //总条数
+                    pageSize: 50, //每页显示条数
+                    pageNumber: 1
+                },
+                tabData: {
+                    current: 'element',
+                    column: [{
+                        'label': 'elementUI(' + _oneIcons.element.length + ')',
+                        'name': 'element',
+                    }, {
+                        'label': 'Material Design Icons(' + _oneIcons.mdi.length + ')',
+                        'name': 'mdi',
+                    }]
+                },
+                weather: {},
+                showData: [],
+                myChart: null,
+                diyRowWidth: 0,
+            }
+        },
+        created() {
+
+        },
+        watch: {
+        },
+        mounted: function () {
+            
+            this.getRowInfo()
+            this.$nextTick(function () {
+                // 向 window派发一个resize内置事件
+                window.dispatchEvent(new Event('resize'))
+                // 初始化渲染
+                this.pagination.pageNumber = 1
+                // 得到总数据tableDataAll进行分页
+                this.dataPagination(_oneIcons[this.tabData.current])
+                this.getWeather();
+            })
+            this.myChart = echarts.init(this.$refs.echarts);
+            window.addEventListener('resize', () => {
+                this.getRowInfo();
+                this.myChart && this.myChart.resize()
+            })
+        },
+        methods: {
+            getRowInfo() {
+                var domWidth =this.$refs["diy-icon"].clientWidth // 宽
+                this.diyRowWidth = domWidth
+                this.myChart && this.myChart.resize();
+            },
+            getWeather() {
+                this.weather.city = null;
+                axios.request({
+                    url: 'get_weather',
+                }).then((e) => {
+                    // 使用刚指定的配置项和数据显示图表。
+                    this.weather = e.data
+                    let _tem_day = [],
+                        _tem_night = [];
+                    option.xAxis[0].data = []
+                    option.xAxis[1].data = []
+                    option.series[0].data = []
+                    option.series[1].data = []
+                    e.data.data.map((v, i, a) => {
+                        option.xAxis[0].data.push(v.date)
+                        option.xAxis[1].data.push(
+                            `${v.wea_img},${v.wea},${v.win},${v.win_speed}`)
+                        _tem_day.push(v.tem_day)
+                        _tem_night.push(v.tem_night)
+                    })
+
+                    option.series[0].data = _tem_day;
+                    option.series[1].data = _tem_night;
+                    this.myChart.setOption(option, true);
+                    this.myChart.resize();
+                })
+            },
+            tabsChange(e) {
+                this.pagination.pageNumber = 1
+                this.dataPagination(_oneIcons[e.name])
+            },
+            currentChange(val) {
+                //页码改变
+                this.pagination.pageNumber = val
+                this.dataPagination(_oneIcons[this.tabData.current])
+            },
+            sizeChange(val) {
+                //切换每页显示条数
+                this.pagination.pageSize = val
+                this.dataPagination(_oneIcons[this.tabData.current])
+            },
+            // 数据分页
+            dataPagination(dataList) {
+                if (!dataList || dataList.length <= 0) {
+                    dataList = []
+                    this.tableData = []
+                }
+                if (dataList.length <= this.maxUsePage) {
+                    this.tableData = dataList
+                    return
+                }
+                let pageNo = this.pagination.pageNumber
+                let pageSize = this.pagination.pageSize
+                var offset = (pageNo - 1) * pageSize
+                this.pagination.totalRows = dataList.length
+                this.showData = (offset + pageSize >= dataList.length) ?
+                    dataList.slice(offset, dataList.length) :
+                    dataList.slice(offset, offset + pageSize)
+            }
+        }
+    })
+</script>
+<style>
+    .title {
+        color: #009900;
+        color: var(--one-diy-color-2)
+    }
+
+    .conetne {
+        margin-top: 20px;
+    }
+
+    div.icons {
+        cursor: pointer;
+        height: 100%;
+    }
+
+    div.icons div {
+        border: solid 1px #fff;
+    }
+
+    div.icons div:hover {
+        border: solid 1px #00C250;
+        border: solid 1px var(--one-diy-color-2);
+    }
+
+    div.icons div i {
+        color: #666;
+        cursor: pointer;
+    }
+</style>

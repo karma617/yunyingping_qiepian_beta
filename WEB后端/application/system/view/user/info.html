@@ -1,0 +1,143 @@
+<div v-cloak id="app" class="main-content">
+    <div class="form-body">
+        <one-form :config="config" v-model="fdata" ref="ruleForm">
+            <div slot='menuLeft'>
+                <el-button class="button-item" :loading="btnLoading" type="primary" @click="store('ruleForm')" size="small">
+                    保存
+                </el-button>
+                <el-button size="small" @click="backpage()">返回</el-button>
+            </div>
+        </one-form>
+    </div>
+</div>
+{include file='common@components/one-form'}
+<script>
+    const _formData = {:json_encode((array)$formData)};
+    const app = new Vue({
+        el: '#app',
+        data() {
+            //自定义验证确认密码
+            var confirmPwd = (rule, value, callback)=>{
+                if ('string' == (typeof this.fdata.password)  && value !== this.fdata.password) {
+                    callback(new Error('确认密码需与密码一致'));
+                } else {
+                    callback();
+                }
+            };
+            return {
+                btnLoading:false,
+                fdata:{},
+                config: {
+                    formdesc: [{
+                            label: "用户名 :",
+                            prop: "username",
+                            type: "input",
+                            rules:{ required: true, message: '用户名不能为空'},
+                            bind: {
+                                'placeholder': "请输入",
+                            },
+                        },
+                        {
+                            label: "昵称 :",
+                            prop: "nick",
+                            type: "input",
+                            rules:{ required: true, message: '昵称不能为空'},
+                            bind: {
+                                'placeholder': "请输入",
+                            },
+                        },
+                        {
+                            label: "密码 :",
+                            prop: "password",
+                            content:'密码留空,不修改',
+                            type: "input",
+                            rules:{ required: false , message: '密码不能为空'},
+                            bind: {
+                                'show-password':true,
+                                'placeholder': "请输入",
+                            },
+                        },
+                        {
+                            label: "确认密码 :",
+                            prop: "password_confirm",
+                            type: "input",
+                            bind: {
+                                'show-password':true,
+                                'placeholder': "请输入",
+                            },
+                            rules:[
+                                    { required: false , message: '确认密码不能为空'},
+                                    { validator: confirmPwd, trigger: 'blur'}
+                                ]
+                        },                        
+                    ],
+                    labelWidth:'200px',
+                    rowSize: 1, //一行可以展示几列表单，默认为3列
+                },
+            }
+        },
+
+        created() {
+            this.fdata = _formData;
+            
+        },
+        methods: {
+            //表单验证
+            getFormPromise(form) {
+                return new Promise(resolve => {
+                    form.validate(res => {
+                        resolve(res);
+                    })
+                })
+            },
+            backpage(){
+                navigateTo({
+                    s: 'system/index/index',
+                })
+            },
+            store(formName) {
+                let _this = this;
+                let _url  = "system/user/info" 
+                // 获取到组件中的form
+                const configForm = this.$refs.ruleForm.$refs.ruleForm;
+                // 使用Promise.all去校验结果,可加入多个表单
+                Promise.all([configForm].map(this.getFormPromise)).then(res => {
+                    const validateResult = res.every(item => !!item);
+                    if (validateResult) {
+                        _this.btnLoading = true;
+                        let postData = _this.fdata
+                        request({
+                            params: {
+                                s: _url,
+                            },
+                            method: 'post',
+                            data: postData
+                        }).then(e => {
+                            _this.btnLoading = false;
+                            if (e.data.code == 0) {
+                                //修改可不跳转
+                                navigateTo({
+                                    s: 'system/index/index',
+                                })
+                            } else {
+                                _this.$message.error(e.data.msg);
+                            }
+                        })
+
+                    } else {
+                        console.log('表单未校验通过');
+                    }
+                })
+                
+            },
+            
+
+        },
+        mounted(){
+            
+        },
+        computed: {
+
+        }
+    });
+</script>

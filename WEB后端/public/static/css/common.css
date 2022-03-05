@@ -1,0 +1,169 @@
+* {
+    box-sizing: border-box;
+}
+[v-cloak]{
+    display: none!important;
+}
+/* 加载动画开始 */
+.page-loading {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    /* 水平居中 */
+    align-items: center;
+    /* 垂直居中 */
+    z-index: 99999;
+}
+
+.page-loading .spinner {
+    margin: 100px auto;
+    width: 50px;
+    height: 60px;
+    text-align: center;
+    font-size: 10px;
+}
+
+.page-loading .spinner>div {
+    background-color: #67C23A;
+    height: 100%;
+    width: 6px;
+    display: inline-block;
+    -webkit-animation: stretchdelay 1.2s infinite ease-in-out;
+    animation: stretchdelay 1.2s infinite ease-in-out;
+}
+
+.page-loading .spinner .rect2 {
+    -webkit-animation-delay: -1.1s;
+    animation-delay: -1.1s;
+}
+
+.page-loading .spinner .rect3 {
+    -webkit-animation-delay: -1.0s;
+    animation-delay: -1.0s;
+}
+
+.page-loading .spinner .rect4 {
+    -webkit-animation-delay: -0.9s;
+    animation-delay: -0.9s;
+}
+
+.page-loading .spinner .rect5 {
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.8s;
+}
+
+@-webkit-keyframes stretchdelay {
+
+    0%,
+    40%,
+    100% {
+        -webkit-transform: scaleY(0.4)
+    }
+
+    20% {
+        -webkit-transform: scaleY(1.0)
+    }
+}
+
+@keyframes stretchdelay {
+
+    0%,
+    40%,
+    100% {
+        transform: scaleY(0.4);
+        -webkit-transform: scaleY(0.4);
+    }
+
+    20% {
+        transform: scaleY(1.0);
+        -webkit-transform: scaleY(1.0);
+    }
+}
+
+/* 加载动画结束 */
+
+/* 滚动条背景 */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 0 1px 0 rgba(0, 0, 0, 0.15);
+    padding: 0;
+    border: none;
+    overflow-x: visible;
+}
+
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.25);
+    padding: 0;
+    border: none;
+    width: 20px;
+}
+/*分页固定*/
+.fixed-pagination {
+    position: fixed;
+    bottom: 20px;
+    right: 30px;
+    z-index: 1000;
+}
+body {
+    font-size: 14px
+}
+
+[text-sm] {
+    font-size: 12px;
+}
+
+[text-success] {
+    color: #67C23A;
+}
+
+[text-warning] {
+    color: #E6A23C;
+}
+
+[text-danger] {
+    color: #F56C6C;
+}
+
+[text-info] {
+    color: #909399;
+}
+
+.el-pagination[center] {
+    text-align: center;
+    padding: 15px 0;
+}
+
+.edui-default .edui-colorpicker-nocolor {
+    height: 20px !important;
+}
+
+.el-form-item__info {
+    color: #999
+}
+
+.el-input {
+    position: relative;
+    font-size: 14px;
+    display: inline-block;
+    /* width: 388px; */
+}
+
+.el-textarea {
+    position: relative;
+    display: inline-block;
+    /* width: 388px; */
+    vertical-align: bottom;
+    font-size: 14px;
+}
+
+.el-radio-button__inner, .el-checkbox-group {
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle
+}

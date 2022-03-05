@@ -1,0 +1,267 @@
+<div v-cloak id="app" class="main-content">
+    <div class="form-body">
+        <one-form :config="config" v-model="fdata" ref="ruleForm">
+            <div slot="menuLeft">
+                <el-button
+                    class="button-item"
+                    :loading="btnLoading"
+                    type="primary"
+                    @click="store('ruleForm')"
+                    size="small"
+                >
+                    保存
+                </el-button>
+                <el-button size="small" @click="backpage()">返回</el-button>
+            </div>
+            <!-- 上传图片 -->
+            <template slot="thumb" slot-scope="scope">
+                <one-img-cell
+                    v-model="fdata[scope.row.prop]"
+                    :img-cell-item-style="{width:'100px',height: '100px',}"
+                    :max="1"
+                ></one-img-cell>
+            </template>
+
+            <template
+                slot="form-item-end"
+                slot-scope="scope"
+                v-if="scope.row.tip"
+            >
+                <span style="left: 400px; position: absolute; font-size: 12px">
+                    {{scope.row.tip}}
+                </span>
+            </template>
+        </one-form>
+    </div>
+</div>
+{include file="common@components/one-form"} {include
+file="common@components/one-upload"} {include
+file='common@components/one-img-cell'}
+<script>
+    const _formData = {:json_encode((array)$formData, 1)} ;
+    const _apiKeys = {:json_encode((array)$apiKeys, 1)} ;
+    const app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                uploading: false,
+                loading: false,
+                btnLoading: false,
+                config: {
+                    formdesc: [
+                        {
+                            label: '等级名称 :',
+                            prop: 'level_name',
+                            type: 'input',
+                            rules: [{ required: true, message: '等级名称' }],
+                            bind: {
+                                placeholder: '等级名称',
+                            },
+                        },
+                        {
+                            label: '有效期 :',
+                            prop: 'expire',
+                            type: 'input',
+                            content: '有效期：天',
+                            bind: {
+                                placeholder: '有效期：天',
+                            },
+                        },
+                        {
+                            label: '会员售价 :',
+                            prop: 'price',
+                            type: 'input',
+                            rules: [
+                                {
+                                    pattern: /^\d+(\.+\d{0,2})?$/,
+                                    message:
+                                        '单位：元；售价为数字，两位小数，例如：50.00',
+                                },
+                            ],
+                            bind: {
+                                placeholder: '会员售价',
+                            },
+                        },
+                        {
+                            label: '折扣价 :',
+                            prop: 'limit_price',
+                            type: 'input',
+                            rules: [
+                                {
+                                    pattern: /^\d+(\.+\d{0,2})?$/,
+                                    message:
+                                        '单位：元；折扣价为数字，两位小数，例如：50.00',
+                                },
+                            ],
+                            content:
+                                '无折扣此处不填写；若填写折扣，则用户购买时的售价为此折扣价！',
+                            bind: {
+                                placeholder: '会员折扣价',
+                            },
+                        },
+                        {
+                            label: '缩略图 :',
+                            prop: 'thumb',
+                            type: 'image',
+                            slot: true,
+                        },
+                        {
+                            label: '描述 :',
+                            prop: 'intro',
+                            type: 'textarea',
+                            bind: {
+                                placeholder: '请填写描述信息',
+                            },
+                        },
+                        {
+                            label: '允许使用的接口 :',
+                            prop: 'api_limit',
+                            type: 'select',
+                            rules: [
+                                {
+                                    required: true,
+                                    message: '请选择允许使用的接口',
+                                },
+                            ],
+                            options: _apiKeys || [],
+                            bind: {
+                                multiple: true,
+                                collapseTags: true,
+                            },
+                        },
+                        {
+                            label: '排序 :',
+                            prop: 'sort',
+                            type: 'input',
+                            rules: [
+                                { pattern: /^\d+$/, message: '排序为数字' },
+                            ],
+                            content: '数字越小越靠前',
+                        },
+                        {
+                            label: '所需成长值 :',
+                            prop: 'growth',
+                            type: 'input',
+                            rules: [
+                                {
+                                    pattern: /^\d+$/,
+                                    message: '所需成长值为数字',
+                                },
+                            ],
+                            bind: {
+                                placeholder: '所需成长值',
+                            },
+                        },
+                        {
+                            label: '赠送积分 :',
+                            prop: 'send_point',
+                            type: 'input',
+                            rules: [
+                                { pattern: /^\d+$/, message: '赠送积分为数字' },
+                            ],
+                            bind: {
+                                placeholder: '赠送积分',
+                            },
+                        },
+                        {
+                            label: '赠送余额 :',
+                            prop: 'send_balance',
+                            type: 'input',
+                            rules: [
+                                {
+                                    pattern: /^\d+(\.+\d{0,2})?$/,
+                                    message: '赠送余额为数字',
+                                },
+                            ],
+                            bind: {
+                                placeholder: '赠送余额',
+                            },
+                        },
+                        {
+                            label: '备注 :',
+                            prop: 'remark',
+                            type: 'textarea',
+                            bind: {
+                                placeholder: '备注',
+                            },
+                        },
+                    ],
+                    labelWidth: '200px',
+                    rowSize: 1, //一行可以展示几列表单，默认为3列
+                },
+                fdata: {
+                    id: '',
+                    level_name: '',
+                    growth: '',
+                    send_point: '',
+                    send_balance: '',
+                    remark: '',
+                    intro: '',
+                    api_limit: '',
+                    price: '0.00',
+                    limit_price: '0.00',
+                    expire: 0,
+                    sort: 100,
+                },
+            };
+        },
+        created() {},
+        mounted() {
+            if (Object.keys(_formData).length > 0) {
+                for (let key in this.fdata) {
+                    this.fdata[key] = _formData[key];
+                }
+            }
+        },
+        methods: {
+            //表单验证
+            getFormPromise(form) {
+                return new Promise((resolve) => {
+                    form.validate((res) => {
+                        resolve(res);
+                    });
+                });
+            },
+            store(formName) {
+                let _this = this;
+                // 获取到组件中的form
+                const configForm = this.$refs.ruleForm.$refs.ruleForm;
+                // 使用Promise.all去校验结果,可加入多个表单
+                Promise.all([configForm].map(this.getFormPromise)).then(
+                    (res) => {
+                        const validateResult = res.every((item) => !!item);
+                        if (validateResult) {
+                            _this.loading = true;
+                            request({
+                                params: {
+                                    s: 'member/level/edit',
+                                },
+                                method: 'post',
+                                data: _this.fdata,
+                            }).then((e) => {
+                                _this.loading = false;
+                                if (e.data.code == 0) {
+                                    _this.backpage();
+                                } else {
+                                    _this.$message.error(e.data.msg);
+                                }
+                            });
+                        } else {
+                            console.log('表单未校验通过');
+                        }
+                    }
+                );
+            },
+            backpage() {
+                navigateTo({
+                    s: 'member/level/index',
+                });
+            },
+            //图片上传完成
+            uploadSuccess(file, prop) {
+                file = file.response.data.data.file;
+                this.fdata[prop] = file;
+            },
+        },
+    });
+</script>

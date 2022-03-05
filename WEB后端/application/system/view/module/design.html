@@ -1,0 +1,202 @@
+<div v-cloak id="app" class="main-content">
+    <div class="form-body">
+        <one-form :config="config" v-model="fdata" ref="ruleForm">
+            <div slot='menuLeft'>
+                <el-button class="button-item" :loading="btnLoading" type="primary" @click="store('ruleForm')" size="small">
+                    保存
+                </el-button>
+                <el-button size="small" @click="backpage()">返回</el-button>
+            </div>
+            <template slot='form-item-end' slot-scope="scope" v-if="scope.row.tip">
+                <a v-if="scope.row.tip.type == 'url'" target="new" :href="scope.row.tip.value">{{scope.row.tip.label}}</a>
+                <div v-else>{{scope.row.tip.content}}</div>
+            </template>
+            <!-- 上传图片 -->
+            <template slot="image" slot-scope="scope">
+                <one-upload class="one-attachment-simple-upload" v-loading="uploading" :disabled="uploading"
+                    :accept="'image'"
+                    @success="uploadSuccess($event,scope.row.prop)"
+                    flex="main:left cross:center">
+                    <el-avatar fit="scale-down" shape="square" size="60" :src="fdata[scope.row.prop]"></el-avatar>
+                </one-upload>
+            </template>
+        </one-form>
+    </div>
+</div>
+{include file='common@components/one-form'}
+{include file='common@components/one-upload'}
+<script>
+    const app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                uploading:false,
+                loading:false,
+                btnLoading:false,
+                config: {
+                    formdesc: [
+                        {
+                            label: "模块名 :",
+                            prop: "name",
+                            type: "input",
+                            content: '模块名称只能为字母',
+                            rules:[{ required: true, message: '模块名不能为空'},
+                                {pattern: /^[A-za-z]+[A-za-z]+$/, message: '模块名称只能为字母'}],
+                            bind: {
+                                'placeholder': "请输入模块名",
+                            },
+                        },
+                        {
+                            label: "模块标题 :",
+                            prop: "title",
+                            type: "input",
+                            content: '模块列表中显示的模块名称',
+                            rules:[{ required: true, message: '模块标题不能为空'}],
+                            bind: {
+                                'placeholder': "请输入模块标题",
+                            },
+                        },
+                        
+                        {
+                            label: "开发者 :",
+                            prop: "author",
+                            type: "input",
+                            rules:[{ required: true, message: '开发者不能为空'}],
+                            bind: {
+                                'placeholder': "请输入开发者",
+                            },
+                        },
+                        {
+                            label: "版本号 :",
+                            prop: "version",
+                            type: "input",
+                            rules:[{ required: true, message: '版本号不能为空'}],
+                            bind: {
+                                'placeholder': "请输入版本号",
+                            },
+                            content: "格式采用三段式：主版本号.次版本号.修订版本号<br/>主版本号【位数变化：1-99】：当模块出现大更新或者很大的改动，比如整体架构发生变化。此版本号会变化。<br>次版本号【位数变化：0-999】：当模块功能有新增或删除，此版本号会变化，如果仅仅是补充原有功能时，此版本号不变化。<br>修订版本号【位数变化：0-999】：一般是 Bug 修复或是一些小的变动，功能上没有大的变化，修复一个严重的bug即发布一个修订版。"
+                        },
+                        {
+                            label: "是否显示菜单 :",
+                            prop: "is_menu",
+                            type: "radio",
+                            options:[
+                                {
+                                    label: '是',
+                                    value: 1
+                                },
+                                {
+                                    label: '否',
+                                    value: 0
+                                }
+                            ],
+                            content: '该模块是否需要显示后台菜单链接，默认显示',
+                        },
+                        {
+                            label: "模块图标 :",
+                            prop: "icon",
+                            type: "image",
+                            content: '[选填] 模块列表内显示的logo图片',
+                        },
+                        {
+                            label: "模块菜单图标 :",
+                            prop: "small_icon",
+                            type: "input",
+                            content: '[选填] 菜单栏里显示的图标，在首页的elementUI或Material Design Icons里选择',
+                            tip: {
+                                label: '点击查看',
+                                value: parse_url(window.location, 'pathname') + '/system/index/index.html',
+                                type: 'url'
+                            }
+                        },
+                        {
+                            label: "模块描述 :",
+                            prop: "intro",
+                            type: "textarea",
+                            rules:[{pattern: /^.{1,70}$/, message: '最多不能超多70字'}],
+                            content: '[选填] 模块列表内显示的模块简介',
+                            bind: {
+                                'placeholder': "请输入模块描述",
+                            },
+                        },
+                    ],
+                    labelWidth:'200px',
+                    rowSize: 1, //一行可以展示几列表单，默认为3列
+                },
+                fdata:{
+                    name: '',
+                    title: '',
+                    intro: '',
+                    version: '1.0.0',
+                    icon: '',
+                    small_icon: '',
+                    author: 'one',
+                    url: 'http://www.oueyni.cn',
+                    is_menu: 1
+                },
+            }
+        },
+        created() {
+        },
+        mounted(){
+        },
+        methods: {
+            //表单验证
+            getFormPromise(form) {
+                return new Promise(resolve => {
+                    form.validate(res => {
+                        resolve(res);
+                    })
+                })
+            },
+            store(formName) {
+                let _this = this;
+                // 获取到组件中的form
+                const configForm = this.$refs.ruleForm.$refs.ruleForm;
+                // 使用Promise.all去校验结果,可加入多个表单
+                Promise.all([configForm].map(this.getFormPromise)).then(res => {
+                    const validateResult = res.every(item => !!item);
+                    if (validateResult) {
+                        _this.loading = true;
+                        let postData = {
+                            'data':_this.fdata
+                        }
+                        request({
+                            params: {
+                                s: 'system/module/design',
+                                group:_this.group
+                            },
+                            method: 'post',
+                            data: postData
+                        }).then(e => {
+                            _this.loading = false;
+                            if (e.data.code == 0) {
+                                //修改可不跳转
+                                if(e.data.url){
+                                    window.location.href = e.data.url
+                                }
+                            } else {
+                                _this.$message.error(e.data.msg);
+                            }
+                        })
+
+                    } else {
+                        console.log('表单未校验通过');
+                    }
+                })
+                
+            },
+            backpage(){
+                navigateTo({
+                    s: 'system/module/index',
+                })
+            },
+            //图片上传完成
+            uploadSuccess(file,prop){
+                file=file.response.data.data.file
+                this.fdata[prop] = file
+            },
+        },
+
+    });
+</script>

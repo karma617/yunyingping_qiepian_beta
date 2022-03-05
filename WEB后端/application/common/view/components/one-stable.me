@@ -1,0 +1,122 @@
+## 基础说明
+```
+/**
+* 属性参数
+* @property {Array} [tableData = []] data table表格数据 自动检测promise对象 promise自动处理分页
+* @property {Array} [tableHeader = []] data table头部内容
+* @property {Object} [defaultName = { label: "label",prop: "prop", width: "width",type: "type",tag: "tag",tableColumnAttributes: "tableColumnAttributes" }] defaultName 指引查找参数
+* @property {Function} cellClick   当某个单元格被点击时会触发该事件  row, column, cell, event
+* @property {Function} select 当用户手动勾选数据行的 Checkbox 时触发的事件  selection, row
+* @property {Function} selectAll 当用户手动勾选全选 Checkbox 时触发的事件 selection
+* @property {Function} selectionChange 当选择项发生变化时会触发该事件 selection
+* @property {Function} cellMouseEnter 当单元格 hover 进入时会触发该事件 row, column, cell, event
+* @property {Function} cellMouseLeave 当单元格 hover 退出时会触发该事件 row, column, cell, event
+* @property {Function} celldblClick  当某个单元格被双击击时会触发该事件 row, column, cell, event
+* @property {Function} rowClick 当某一行被点击时会触发该事件 row, column, event
+* @property {Function} rowContextMenu 当某一行被鼠标右键点击时会触发该事件 row, column, event
+* @property {Function} rowdblClick 当某一行被双击时会触发该事件  row, column, event
+* @property {Function} headerClick 当某一列的表头被点击时会触发该事件 column, event
+* @property {Function} headerContextMenu 当某一列的表头被鼠标右键点击时触发该事件  column, event
+* @property {Object} tableAttributes（Table Attributes） 参考 https://element.eleme.cn/#/zh-CN/component/table  (max-height 这种要写成maxHeight)
+* @property {Function} operationCallback 操作项回调 event, props
+* @property {Boolean} isPage 是否显示分页插件默认为false;当isPage 为true 时需要为pageAttributes配置参数
+* @property {Boolean} isHead 是否显示顶部工具栏,可用插槽 menuLeft menuRight
+* @property {Object} pageAttributes 对应element 分页的 Attributes参数中线间隔，要去中线并把中线连接首字母大写；如：current-page写成 currentPage
+* @property {Function} sizeChange pageSize 改变时会触发
+* @property {Function} currentChange currentPage 改变时会触发
+* @property {Function} prevClick 用户点击上一页按钮改变当前页后触发
+* @property {Function} nextClick 用户点击下一页按钮改变当前页后触发
+* @property {Function} customColumnCallback 自定义table 列的内容(当tableHeader里面的type=="component"时才会有用) 返回 createElement, props, name三个值；createElement()是vue 里面的渲染函数，props 返回的是当前行的所有内容,name 是当前行绑定的显示属性主要用标识，从而实现不同的列使不同的定义
+*/
+<one-stable 
+    ref='stable' 
+    :table-data="getData" 
+    :table-header="tableHeader"
+    :table-attributes="{
+        stripe: false,
+        border: true,
+        rowClassName:rowClassName //传入函数可做行背景之类的操作
+    }" 
+    :table-events="{
+        'sort-change':sortChange //支持自扩展表格事件 //https://element.eleme.cn/#/zh-CN/component/table
+    }"
+    :is-page="true" 
+    :page-attributes="{
+        background: true
+    }" 
+    //自定义单元格回调(可选方式A) type=="component"时才会有用
+    :custom-column-callback="customColumnCallback"
+>
+<!-- 工具菜单 -->
+<template slot="menuLeft"></template>
+<template slot="menuRight"></template>
+<!-- 单元格具名插槽(可先方式B) type=="component"时才会有用-->
+<template slot="status" slot-scope="scope"></template>
+</one-stable>
+```
+## 参数说明
+```
+tableHeader:[{
+    label: '交易日期',
+    prop: 'trans_date',
+    headerAlign:'center',
+    align: 'center',
+    width: 90,
+    type: "index|select|component|operation", //序号 多选 自定义 操作列
+    tableColumnAttributes:{
+        //参考官方文档 可自定义表头单位格
+        renderHeader:(h,{column},[]),
+        //配合服务端排序
+        sortable:"custom",
+    }
+}]
+```
+## 常用method
+```
+// 服端排序 
+sortChange(params){
+    console.log(params)
+},
+//全选回调
+selectAll(e){
+    console.log(e)
+},
+//操作回调
+operation(event, props,action){
+    console.log(event, props,action);
+},
+//单元格渲染
+customColumnCallback(h, props, name) {
+    return [h("i"{
+                class: ["el-icon-user-solid"]
+            },
+            props.row[name]
+        )
+    ];
+},
+//自定义行颜色
+rowClassName(e,){
+    let _class = ''
+    if ((e.rowIndex % 3) == 0) {
+        _class = 'wait-row';
+    } else  if((e.rowIndex % 2) ==0 ){
+        _class = 'warning-row';
+    }
+    return _class
+},
+//取数据promise方式
+getData(param) {
+    //如有本地搜索 请自请合并
+    let _data = [];
+    return new Promise((resolve,reject)=>{
+        return resolve({
+            data:_data,
+            total:100
+        })
+    })
+},
+//搜索
+setSearch() {
+    this.$refs['stable'].refresh(true);
+},
+```

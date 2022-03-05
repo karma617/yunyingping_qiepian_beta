@@ -1,0 +1,246 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <one-table v-if="!helpShow" :option="tableOption" :data="tableData" :loading="loading" @current-change="" @size-change="">
+        <!-- 自定义列 -->
+        <template slot="status" slot-scope="scope">
+            <el-switch  :value="scope.row.status" :disabled="!scope.row.install" :active-value="1" :inactive-value="0"
+                @change="changeStatus(scope.row, scope.index)">
+            </el-switch>
+        </template>
+       
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            
+            <template v-if="scope.row.install==0">
+                <el-button style="width:60px"  type="primary"  plain size="mini"  class="_tool" @click="install(scope.row, scope.index)">
+                    <i class="el-icon-download"></i>安装
+                </el-button>
+            </template>
+            <template v-if="scope.row.install==1">
+                <el-button type="primary"   size="mini"  class="_tool" @click="config(scope.row, scope.index)">
+                    <i class="el-icon-s-tools"></i>
+                </el-button>
+               
+                <el-popconfirm
+                    confirm-button-text='好的'
+                    cancel-button-text='不用了'
+                    icon="el-icon-info"
+                    icon-color="red"
+                    title="卸载后配置将清空,确定卸载吗？"
+                    @confirm="uninstall(scope.row, scope.index)"
+                >
+                <el-button  slot="reference" size="mini" class="_tool" type="danger">
+                    <i class="el-icon-delete"></i>
+                </el-button>
+                </el-popconfirm>
+            </template>
+            
+            
+        
+        </template>
+    </one-table>
+<div v-highlight v-if="helpShow">
+<pre>
+<code >/**
+* [示例]调用内置方法发起支付 除支付宝手机电脑支付其它为返回参数自行组装
+* @param string $method *[wechat_qr,wechat_js,wechat_mini,wechat_mweb,wechat_app,alipay,alipay_app,alipay_scan]
+* @param string $order_no 订单号
+* @param integer $money 金额 微信需要*100 生产环境需要高精度处理 intval(strval($val*100)); 
+* @param string $body 支付宝描述 微信描述
+* @param string $subject 支付宝标题 转换为微信detail
+* @param integer $uid 用户标识
+* @param string $back_url 返回地址
+*/
+$data=[
+    'method'   => $method,
+    'order_no' => '',
+    'money'    => 1+rand(1,99)/100,
+    'body'     => '',
+    'subject'  => '',
+    'uid'      => 1000001,
+    'back_url' => ''
+];
+$rs = action('one_pay/index/apply',$data,'home')
+
+/**
+* [示列] 独立发起支付接口
+* 支付提交接口
+* _submit($param);
+* 同步通知接口
+* _sync($param);
+* 异步通知接口
+* _async($param);
+* 退款提交接口
+* _refundSubmit($param);
+* 同步退款通知接口
+* _syncRefund($param);
+* 异步退款通知接口
+* _asyncRefund($param);
+*/
+
+use app\one_pay\driver\Factory;
+
+//微信支付(非V3) https://pay.weixin.qq.com/wiki/doc/api/index.html
+//支付宝支付 https://b.alipay.com/signing/productSetV2.htm
+
+//支付
+try{
+    $factory = new Factory('wechat_qr');
+    $rs = $factory->__call('_submit', [
+        'out_trade_no' => $param['order_no'],
+        'total_fee' => $param['money']*100,
+        'body'         => $param['body'],
+        'detail'      => $param['subject'],
+    ]);
+}catch(Exception $e){
+    //TODO echo $e->getMessage();
+}
+
+//退款
+try{
+    $factory = new Factory('wechat_qr');
+    $rs = $factory->__call('_refundSubmit', [
+        'out_trade_no' => '2020122620073705186',
+        'out_refund_no'=>order_number(),
+        'total_fee' => 10,
+        'refund_fee' => 10,
+    ]);
+}catch(Exception $e){
+    //TODO echo $e->getMessage();
+}</code>
+</pre>
+</div>
+</div>
+
+{include file='common@components/one-tabs'}
+{include file='common@components/one-table'}
+<!-- 高亮代码 -->
+<link href="__STATIC__/lib/hljs/androidstudio.min.css" rel="stylesheet">
+<script src="__STATIC__/lib/hljs/highlight.min.js?v=10.3.2"></script>
+<script src="__STATIC__/lib/hljs/highlightjs-line-numbers.min.js?v=2.8.0"></script>
+<script >
+    Vue.directive('highlight', function (el) {
+        let blocks = el.querySelectorAll('pre code');
+        blocks.forEach((block) => {
+            // let str = block.innerHTML;
+            // 得到经过highlight.js之后的html代码
+            // const preCode = hljs.highlightAuto(str).value;
+            // const _html = "<ul><li>" + preCode.replace(/\n/g, "\n</li><li>") + "\n</li></ul>"
+            // 处理后的HTML回写
+            // block.innerHTML = unEscapeHTML(_html)
+            hljs.highlightBlock(block)
+        })
+    })
+    const _tabData= {:json_encode((array)$tabData, 1)} ;
+    new Vue({
+        el: '#app',
+        created(){
+            this.getData()
+        },
+        methods: {
+            // 切换标签
+            handleChange(item) {
+                if(item.name == 'help'){
+                    this.helpShow = true
+                    return
+                }
+                window.location.href = item.url
+            },
+            //改变状态
+            changeStatus(row,index) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'one_pay/index/status/',
+                        id: row.id,
+                        val: 1-row.status,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    this.getData()
+                })
+            },
+            
+           //安装卸载
+           install(row,index){
+                navigateTo({
+                    s: 'one_pay/index/install',
+                    code:row.code
+                })
+           },
+           //config
+           config(row,index){
+                navigateTo({
+                    s: 'one_pay/index/config',
+                    code:row.code
+                })
+           },
+           //删除
+           uninstall(row,index){
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'one_pay/index/uninstall/',
+                    },
+                    data:{'code':row.code},
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    this.getData()
+                })
+
+           },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'one_pay/index/index/',
+                    },
+                    data:{'status':_this.tabData.val},
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableData = e.data.data
+                    
+                })
+            },
+        },
+        data() {
+            return {
+                helpShow:false,
+                loading:false,
+                tabData: _tabData,
+                tableData: [],
+                tableOption: {
+                    index: true,
+                    header: false,
+                    selection: false,
+                    operates: {width: 120},
+                    page: false,
+                    size: 'mini',
+                    column: [{
+                            label: '状态',
+                            prop: 'status',
+                            width:80,
+                            slot: true,
+                        }, {
+                            label: '平台',
+                            align:'left',
+                            width:150,
+                            prop: 'title',
+                        }, {
+                            label: '简介',
+                            align:'left',
+                            prop: 'intro'
+                        }
+                    ]
+                }
+            };
+        }
+    })
+</script>

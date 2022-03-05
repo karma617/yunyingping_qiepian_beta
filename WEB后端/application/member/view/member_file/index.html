@@ -1,0 +1,189 @@
+<div v-cloak id="app" class="main-content">
+    <one-table :option="option" :data="data" :loading="loading"  @current-change="handleCurrentChange" @size-change="handleSizeChange">
+
+        <template slot="menuRight">
+            <div class="form-box" flex="main:left">
+                <el-input
+                    type="text"
+                    v-model="search.keyword"
+                    size="mini"
+                    clearable
+                    placeholder="文件名"
+                    style="width: 240px; margin-right: 5px"
+                ></el-input>
+                <el-button type="primary" size="mini" @click="getData"
+                    >筛选</el-button
+                >
+            </div>
+        </template>
+        <!-- 自定义列 -->
+        <template slot="status" slot-scope="scope">
+            <el-switch v-model="scope.row.status" :disabled="scope.row.system" :active-value="1" :inactive-value="0"
+            @change="changeSwitch(scope.row)">
+            </el-switch>
+        </template>
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            <el-button size="mini" :disabled="scope.row.system" class="_tool"
+                @click="handleEdit(scope.row, scope.index)">
+                <i class="el-icon-edit"></i>
+            </el-button>
+            <el-popconfirm
+                confirm-button-text="好的"
+                cancel-button-text="不用了"
+                icon="el-icon-info"
+                icon-color="red"
+                title="删除不能恢复,确定删除吗？"
+                @confirm="handleDel(scope.row, scope.index)"
+            >
+            <el-button :disabled="scope.row.system" slot="reference" size="mini" class="_tool" type="danger">
+                <i class="el-icon-delete"></i>
+            </el-button>
+            </el-popconfirm>
+        </template>
+    </one-table>
+</div>
+{include file="common@components/one-table"}
+<script>
+    new Vue({
+        el: "#app",
+        data() {
+            return {
+                loading: false,
+                data: [],
+                option: {
+                    index: false,
+                    header: true,
+                    selection: false,
+                    operates: {width:100},
+                    page: {},
+                    size: "mini",
+                    column: [
+                        {
+                            label: "文件ID",
+                            prop: "fileId",
+                        },
+                        {
+                            label: "用户id",
+                            prop: "userId",
+                        },
+                        {
+                            label: "文件名",
+                            prop: "fileName",
+                        },
+                        {
+                            label: "文件Sha",
+                            prop: "fileSha",
+                        },
+                        {
+                            label: "文件地址",
+                            prop: "fileUrl",
+                        },
+                        {
+                            label: "接口源",
+                            prop: "from",
+                        },
+                        {
+                            label: "分辨率",
+                            prop: "resolute",
+                        },
+                        {
+                            label: "创建时间",
+                            prop: "create_time",
+                        },
+                        {
+                            label: "更新时间",
+                            prop: "update_time",
+                        },
+                    ]
+                },
+                search: {
+                    keyword: '',
+                },
+            }
+        },
+        created() {
+            this.getData()
+        },
+        methods: {
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true;
+                let postData = cloneDeep(_this.search);
+                request({
+                    params: {
+                        s: "member/member_file/index",
+                        page: _this.option.page.currentPage,
+                        limit: _this.option.page.pageSize,
+                    },
+                    data: postData,
+                    method: "post"
+                }).then(e => {
+                    _this.loading = false;
+                    _this.data = e.data.data.list;
+                    _this.option.page.total = e.data.data.count;
+                })
+            },
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.option.page.currentPage = currentPage;
+                _this.getData();
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.option.page.pageSize = val;
+                _this.getData();
+            },
+            //改变状态
+            changeSwitch(row) {
+                let _this = this;
+                _this.loading = true;
+                request({
+                    params: {
+                        s: "member/member_file/status/",
+                        id: row.id,
+                        val: row.status,
+                    },
+                    method: "post"
+                }).then(e => {
+                    _this.loading = false;
+                })
+            },
+           
+            //删除行
+            handleDel (row, index) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: "member/member_file/del/",
+                		id:row.id,
+                	},
+                	method: "post"
+                }).then(e => {
+                    _this.data.splice(index, 1);
+                	_this.loading = false;
+                })
+            },
+            //添加
+            handleAdd() {
+                let _this = this
+                navigateTo({
+                    s: "member/member_file/edit",
+                })
+            },
+            //编辑
+            handleEdit(row, index){
+                let _this = this
+                navigateTo({
+                    s: "member/member_file/edit",
+                    id:row.id,
+                })
+            },
+           
+        }
+    })
+</script>

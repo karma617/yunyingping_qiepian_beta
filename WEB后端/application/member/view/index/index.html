@@ -1,0 +1,345 @@
+<div v-cloak id="app" class="main-content">
+    <one-table :option="option" :data="data" :loading="loading"  @current-change="handleCurrentChange" @size-change="handleSizeChange">
+        <!-- 工具菜单 -->
+        <template slot="menuLeft">
+            <el-button type="primary" size="mini" @click="handleAdd">添加</el-button>
+        </template>
+        <template slot="menuRight">
+            <div class="form-box" flex="main:left">
+                <el-select size="mini" v-model="search.level_id" placeholder="请选择" clearable style="margin-right: 5px">
+                    <el-option v-for="item in _level_select" :key="item.value" :label="item.label" :value="item.value">
+                    </el-option>
+                </el-select>
+                <el-input type="text" v-model="search.keyword" size='mini' placeholder="用户名|昵称|手机|邮箱" style="width:240px;margin-right: 5px;"></el-input>
+                <el-button type="primary" size="mini" @click="getData">筛选</el-button>
+            </div>
+        </template>
+        <!-- 自定义列 -->
+        <template slot="status" slot-scope="scope">
+            <el-switch v-model="scope.row.status" :disabled="scope.row.system" :active-value="1" :inactive-value="0"
+            @change="changeSwitch(scope.row)">
+        </template>
+        <template slot="username" slot-scope="scope">
+            <div flex="main:left">
+            <el-image style="width: 70px; height: 70px;padding:5px;" :src="scope.row.headimg ? scope.row.headimg : 'http://q1.qlogo.cn/g?b=qq&nk=' + scope.row.qq + '&s=640'" fit="cover">
+                <div slot="error" style="height: 60px;background: #f5f7fa;" flex="main:center cross:center">
+                   <i class="mdi mdi-account-circle-outline" style="display:block;font-size: 60px;color:#c1c1c1"></i>
+                  </div>
+            </el-image>
+                <div flex="dir:top main:left cross:top" class="flex-column-start">
+                    <div>用户名:{{scope.row.username}}</div>
+                    <div>QQ:{{scope.row.qq}}</div>
+                </div>
+            </div>
+        </template>
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            <el-button size="mini" :disabled="scope.row.system" class="_tool" @click="handleEdit(scope.row, scope.index)">
+                <i class="el-icon-edit"></i>
+            </el-button>
+            <el-dropdown trigger="click" @command="handleCommand(scope.row, scope.index,$event)" size="" >
+                <el-button size="mini" type="warning">
+                    <i class="el-icon-s-operation"></i>
+                </el-button>
+                <el-dropdown-menu slot="dropdown" size="small">
+                  <el-dropdown-item command="repwd">重置密码</el-dropdown-item>
+                  <el-dropdown-item command="handleDialog">调整帐户</el-dropdown-item>
+                  <el-dropdown-item command="handleDetail">帐户明细</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            <el-popconfirm
+                confirm-button-text="好的"
+                cancel-button-text="不用了"
+                icon="el-icon-info"
+                icon-color="red"
+                title="删除不能恢复,确定删除吗？"
+                @confirm="handleDel(scope.row, scope.index)"
+            >
+            <el-button :disabled="scope.row.system" slot="reference" size="mini" class="_tool" type="danger">
+                <i class="el-icon-delete"></i>
+            </el-button>
+            </el-popconfirm>
+        </template>
+    </one-table>
+    <el-dialog :title="`当前会员 ${dialogData['username']}`" width="650px" :show-close="false" :close-on-click-modal="false" :visible.sync="dialog" >
+        <el-form :model="form"  size="small">
+        <el-row :gutter="8" style="padding-bottom: 10px;">
+            <el-col :span="4.2">
+              <el-card class="card" shadow="never" >
+                  <div style="font-size: 10px;color:#dcdfe6"><el-radio v-model="form.account_type" label="balance">可用余额</el-radio></div>
+                  <div style="font-size: 25px;text-align:center;width:100px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" :title="dialogData.balance">{{dialogData.balance}}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="4.2">
+              <el-card class="card" shadow="never" >
+                    <div style="font-size: 10px;color:#dcdfe6"><el-radio v-model="form.account_type" label="frozen_balance">冻结余额</el-radio></div>
+                  <div style="font-size: 25px;text-align:center;width:100px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" :title="dialogData.frozen_balance">{{dialogData.frozen_balance}}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="4.2">
+              <el-card class="card" shadow="never" >
+                  <div style="font-size: 10px;color:#dcdfe6"><el-radio v-model="form.account_type" label="point">可用积分</el-radio></div>
+                  <div style="font-size: 25px;text-align:center;width:100px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" :title="dialogData.point">{{dialogData.point}}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="4.2">
+              <el-card class="card" shadow="never" >
+                  <div style="font-size: 10px;color:#dcdfe6"><el-radio v-model="form.account_type" label="growth">成长经验</el-radio></div>
+                  <div style="font-size: 25px;text-align:center;width:100px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" :title="dialogData.growth">{{dialogData.growth}}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="4.2">
+                <el-card class="card" shadow="never" >
+                    <div style="font-size: 10px;color:#dcdfe6"><el-radio v-model="form.account_type" label="exp_time">会员剩余天数</el-radio></div>
+                    <div style="font-size: 16px;text-align:center;width:100px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" :title="dialogData.exp_time">{{dialogData.exptime_text}}</div>
+                </el-card>
+              </el-col>
+            
+          </el-row>
+            <el-form-item label="数值" :label-width="'50px'" >
+                <el-input type="number" v-model="form.account_data" size='small'  style="width:430px" placeholder="正数加,负数减"></el-input>
+            </el-form-item>
+            <el-form-item label="备注" :label-width="'50px'">
+                <el-input type="textarea"  v-model="form.remark" size='small' style="width:430px" placeholder="请输入内容"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="handleDialogClose" size="small">取 消</el-button>
+          <el-button type="primary"  size="small" @click="handleDialogSave" :loading="formLoading">确 定</el-button>
+        </div>
+    </el-dialog>
+</div>
+{include file="common@components/one-table"}
+<script>
+    const _level_select = {:json_encode((array)$_level_select, 1)} ;
+    new Vue({
+        el: "#app",
+        data() {
+            return {
+                loading: false,
+                data: [],
+                option: {
+                    index: false,
+                    header: true,
+                    selection: false,
+                    operates: {width:120},
+                    page: {},
+                    size: "mini",
+                    column: [
+                        {
+                            label: "状态",
+                            prop: "status",
+                            slot: true,
+                            width:70
+                        },
+                        {
+                            label: "ID",
+                            prop: "id",
+                            width:70
+                        },
+                        {
+                            label: "帐号",
+                            prop: "username",
+                            width:215,
+                            slot: true
+                        },
+                        {
+                            label: "会员等级",
+                            prop: "level_name",
+                        },
+                        {
+                            label: "可用余额",
+                            prop: "balance",
+                        },
+                        {
+                            label: "冻结余额",
+                            prop: "frozen_balance",
+                        },
+                        {
+                            label: "到期时间",
+                            prop: "exp_time",
+                            width:160
+                        },
+                        {
+                            label: "最后登录",
+                            prop: "last_login_time",
+                            width:160
+                        },
+                    ]
+                },
+                dialog: false,
+                dialogData: [],
+                form:{
+                    account_type:'balance',
+                    account_data:'',
+                    remark:''
+                },
+                
+                search:{
+                    level_id:'',
+                    keyword:''
+                },
+                formLoading:false,
+            }
+        },
+        created() {
+            this.getData()
+        },
+        methods: {
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                let postData = cloneDeep(_this.search);
+                request({
+                    url: "member/index/index",
+                    params: {
+                        page: _this.option.page.currentPage,
+                        limit: _this.option.page.pageSize,
+                    },
+                    data:postData,
+                    method: "post"
+                }).then(e => {
+                    _this.loading = false;
+                    _this.data = e.data.data.list;
+                    _this.option.page.total = e.data.data.count;
+                })
+            },
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.option.page.currentPage = currentPage;
+                _this.getData();
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.option.page.pageSize = val;
+                _this.getData();
+            },
+            //改变状态
+            changeSwitch(row) {
+                let _this = this;
+                _this.loading = true;
+                request({
+                    params: {
+                        s: "member/index/status/",
+                        id: row.id,
+                        val: row.status,
+                    },
+                    method: "post"
+                }).then(e => {
+                    _this.loading = false;
+                })
+            },
+           
+            //删除行
+            handleDel (row, index) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: "member/index/del/",
+                		id:row.id,
+                	},
+                	method: "post"
+                }).then(e => {
+                    _this.data.splice(index, 1);
+                	_this.loading = false;
+                })
+            },
+            //添加
+            handleAdd() {
+                let _this = this
+                navigateTo({
+                    s: "member/index/edit",
+                })
+            },
+            //编辑
+            handleEdit(row, index){
+                let _this = this
+                navigateTo({
+                    s: "member/index/edit",
+                    id:row.id,
+                })
+            },
+            //帐户详情
+            handleDetail(row, index){
+                let _this = this
+                navigateTo({
+                    s: "member/account/index",
+                    id:row.id,
+                })
+            },
+            //下拉菜单命令
+            handleCommand(row,index,e){
+                this[e] && this[e](row,index);
+            },
+            //重置密码
+            repwd(row,index){
+                console.log(row)
+                this.$confirm('此操作不可逆转, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    request({
+                        url:'member/index/modify_pwd',
+                        data:{id:row.id},
+                        method:'post'
+                    }).then(e=>{
+                        this.$alert(e.data.msg);
+                    })
+                }).catch(() => {
+             
+                });
+            },
+            //金额操作
+            handleDialog(row, index) {
+                let _this = this
+                _this.dialog = true
+                _this.dialogData = row
+            },
+            handleDialogClose(e) {
+                this.dialog = false
+                this.dialogData = []
+            },
+            handleDialogSave(){
+                let _this = this
+                let data = _this.form
+                data.member_id = _this.dialogData.id
+                if(parseFloat(data.money)<=0){
+                    _this.$message.error('金额不能为0')
+                    return
+                }
+                _this.formLoading=true;
+                request({
+                    url: 'member/index/modify_account',
+                    data:data,
+                    method: 'post'
+                }).then(e => {
+                    _this.formLoading = false
+                    _this.dialog = false
+                    _this.dialogData = []
+                    _this.getData()
+                })
+            }
+           
+        }
+    })
+</script>
+<style>
+    .el-dropdown .el-button--mini {
+        padding: 7px 7px;
+    }
+    .el-card__body {
+        padding: 5px;
+    }
+
+    .el-dialog__body {
+        padding: 10px;
+    }
+    .form-box .el-input {
+        width: 120px;
+    }
+</style>

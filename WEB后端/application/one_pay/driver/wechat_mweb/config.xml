@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<root>
+	<item id="code"><![CDATA[wechat_mweb]]></item>
+	<item id="title"><![CDATA[微信H5支付]]></item>
+	<item id="intro"><![CDATA[用户在微信以外的手机浏览器请求微信支付的场景唤起微信支付]]></item>
+	<item id="status"><![CDATA[0]]></item>
+	<item id="applies"><![CDATA[wap]]></item>
+	<item id="config">
+		<item id="appid">
+			<item id="label"><![CDATA[开发者ID]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[]]></item>
+			<item id="tip"><![CDATA[微信公众平台-开发-基本配置-开发者ID(AppID)<meta name="referrer" content="never">&nbsp;&nbsp;<a href="https://pay.weixin.qq.com" target="_blank">引导链接</a>]]></item>
+			<item id="sensitive"><![CDATA[yes]]></item>
+		</item>
+		<item id="secret">
+			<item id="label"><![CDATA[开发者密码]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[]]></item>
+			<item id="tip"><![CDATA[微信公众平台-开发-基本配置-开发者密码(AppSecret)&nbsp;&nbsp;<a href="https://pay.weixin.qq.com" target="_blank">引导链接</a>]]></item>
+			<item id="sensitive"><![CDATA[yes]]></item>
+		</item>
+		<item id="mch_id">
+			<item id="label"><![CDATA[支付商户号]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[required]]></item>
+			<item id="tip"><![CDATA[商户平台-账户中心-账户设置-商户信息&nbsp;&nbsp;<a href="https://pay.weixin.qq.com/index.php/core/account/info" target="_blank">引导链接</a>]]></item>
+			<item id="sensitive"><![CDATA[yes]]></item>
+		</item>
+		<item id="key">
+			<item id="label"><![CDATA[API密钥]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[required]]></item>
+			<item id="tip"><![CDATA[商户平台-账户中心-账户设置-API安全-API密钥&nbsp;&nbsp;<a href="https://pay.weixin.qq.com/index.php/core/cert/api_cert" target="_blank">引导链接</a>]]></item>
+			<item id="sensitive"><![CDATA[yes]]></item>
+		</item>
+		<item id="cert_pem">
+			<item id="label"><![CDATA[证书文件]]></item>
+			<item id="type"><![CDATA[textarea]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="tip"><![CDATA[商户平台-账户中心-账户设置-API安全-API证书-下载证书-证书pem格式&nbsp;&nbsp;<a href="https://pay.weixin.qq.com/index.php/core/cert/api_cert" target="_blank">引导链接</a>]]></item>
+		</item>
+		<item id="key_pem">
+			<item id="label"><![CDATA[证书秘钥]]></item>
+			<item id="type"><![CDATA[textarea]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="tip"><![CDATA[商户平台-账户中心-账户设置-API安全-API证书-下载证书-证书密钥pem格式&nbsp;&nbsp;<a href="https://pay.weixin.qq.com/index.php/core/cert/api_cert" target="_blank">引导链接</a>]]></item>
+		</item>
+		<item id="payment_callback">
+			<item id="label"><![CDATA[支付回调方法]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[required]]></item>
+			<item id="tip"><![CDATA[支付成功后执行，格式：模块/控制器/方法]]></item>
+		</item>
+		<item id="refund_callback">
+			<item id="label"><![CDATA[退款回调方法]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[required]]></item>
+			<item id="tip"><![CDATA[退款成功后执行，格式：模块/控制器/方法]]></item>
+		</item>
+	</item>
+</root>

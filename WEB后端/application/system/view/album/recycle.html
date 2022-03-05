@@ -1,0 +1,273 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <el-container>
+        <el-header style="border-bottom: 1px solid #d7dae2;border-radius: 0;height: 38px;" flex="cross:center">
+            
+            <el-button type="success" :disabled="selPic.length == 0" size="mini" @click="batchAction(false)">恢复</el-button>
+            <div style="width: 5px;"></div>
+            <el-popconfirm  title="删除不可恢复,是否确认" @confirm="batchAction(true)">
+            <el-button slot="reference" type="danger" :disabled="selPic.length == 0" size="mini" >删除</el-button>
+        </el-popconfirm>
+            <!-- <div style="width: 5px;"></div>
+            <el-select v-if="albumGroupForm.id>0" size="mini" :disabled="selPic.length == 0" v-model="changeGroupFrom.album_id" clearable placeholder="移动到">
+                <el-option v-for="item in groups" :key="item.album_id" :label="item.album_name"
+                :value="item.album_id">
+            </el-option> -->
+        </el-select>
+     
+        
+        </el-header>
+        <el-container v-loading="loading">
+            
+            <el-main style="padding:0px;">
+
+                <div class="img-box" flex="main:left dir:left wrap:wrap">
+
+                    <div class="image-row" v-for="(pic,kpic) in pics" :key="kpic">
+                        <div class="image-main">
+                            <div class="diy-edge" @click="setSelPic(pic.pic_id,selPic.includes(pic.pic_id)?!1:!0)">
+                                <el-tag size="mini" type="info" v-if="selPic.findIndex(e=>e==pic.pic_id)+1 == 0" ><i class="el-icon-plus"></i></el-tag>
+                                <el-tag size="mini" v-else>{{selPic.findIndex(e=>e==pic.pic_id)+1}}</el-tag>
+                            </div>
+                            <el-image :title="pic.pic_name" style="width:148px;height:148px" :src="pic.pic_path"
+                                :fit="'scale-down'" :preview-src-list="pic.pic_path.split(',')">
+                                <div slot="error" class="image-slot" style="width:148px;height:148px;" flex="main:center cross:center">
+                                    <img :src="`/static/img/file_ico/${pic.ext}.png`">
+                                </div>
+                            </el-image>
+                            <div @click="initChangeName(pic,kpic)" class="image-title" flex="main:justify"
+                                :title="pic.pic_name">
+                                <div>{{pic.pic_name}}</div>
+                                <div>{{pic.drive || '未知'}}</div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                <el-pagination background layout="total, sizes, prev, pager, next" @size-change="handleSizeChange"
+                @current-change="handleCurrentChange" :page-sizes="[30, 60, 90,150,300]" :total="total">
+                </el-pagination>
+            </el-main>
+        </el-container>
+    </el-container>
+    
+</div>
+{include file='common@components/one-tabs'}
+<script>
+    const _tabData = {:json_encode($tabData)};
+    const drives = {:json_encode($drives)};
+    console.log(drives);
+    new Vue({
+        el: "#app",
+        props: {
+            visible: {
+                type: Boolean,
+                default: false,
+            },
+            accept: {
+                type: String,
+                default: "image/gif,image/jpeg,image/jpg,image/png,image/svg"
+            }
+        },
+        data() {
+            return {
+                loading:!0,
+                drives:drives,
+                drive:"Local",
+                tabData: _tabData,
+                groups: [],
+                pics: [],
+                selPic:[],
+                total: 0,
+                album_id: 0,
+                album_name: '所有附件',
+                dialogFormTitle: '编辑分组',
+                page: 1,
+                limit:30,
+                dialogFormVisible: false,
+                albumGroupForm: {
+                    id: '',
+                    album_name: '',
+                },
+                formLabelWidth: '70px',
+                dialogChangeName: false,
+                changeNameFrom: {
+                    pic_id: '',
+                    pic_name: '',
+                    album_id: ''
+                },
+                realDel: false,
+                changeGroupFrom: {
+                    pic_id: '',
+                    album_id: '',
+                    album_id_old: ''
+                },
+                dialogChangeGroupFrom: false
+            };
+        },
+        created() {
+            this.getPics();
+        },
+
+        methods: {
+           
+            // 切换标签
+            handleChange(item) {
+                window.location.href = item.url
+            },
+            //选择图片
+            setSelPic(val,env){
+                if(false === env){
+                    let _index = this.selPic.findIndex(v=>v==val)
+                    delete this.selPic.splice(_index,1)
+
+                }else{
+                   !this.selPic.includes(val) && this.selPic.push(val)
+                }
+            },
+           
+            getPics() {
+                let _this = this;
+                _this.loading = !0
+                request({
+                    url: 'system/album/recycle',
+                    params: {
+                        page: _this.page,
+                        limit: _this.limit,
+                        album_id: _this.album_id
+                    }
+                }).then((e) => {
+                    _this.loading = !1
+                    _this.pics = e.data.data.list;
+                    _this.selPic=[]
+                    _this.total = e.data.data.count
+                })
+            },
+            
+            //批量删除
+            batchAction(action){
+                console.log('batchAction=========')
+                let _this = this;
+                let _ids = _this.selPic || [];
+                _this.loading = !0;
+                request({
+                    url: 'system/album/recycle_action',
+                    params: {
+                        pic_id:  _ids,
+                        action:action
+                    }
+                }).then((e) => {
+                    if('undefined' != typeof e){
+                        _this.getPics()
+                    }
+                })
+            },
+            
+            handleSizeChange(val){
+                this.limit = val
+                this.getPics()
+            },
+            handleCurrentChange(val){
+                this.page = val
+                this.getPics()
+            },
+        },
+    });
+</script>
+
+<style scoped>
+    .el-divider--vertical {
+        margin: 0px !important;
+    }
+
+    .img-box {
+        margin: 10px;
+
+    }
+
+    .img-box:after {
+        content: "";
+        flex: auto;
+
+    }
+
+    .image-row {
+        border: 1px solid #d7dae2;
+        width: 150px;
+        height: 180px;
+        margin: 10px;
+    }
+
+    .image-row:hover {
+        border: 1px solid #00c250;
+        border: 1px solid var(--one-diy-color-0);
+        width: 150px;
+    }
+
+    .image-head-div {
+        font-size: smaller;
+        text-align: center;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    .image-head-div span {
+        color: #e6a23c;
+    }
+
+    .image-main {
+        width: 148px;
+        height: 148px;
+    }
+
+    .el-menu {
+     border-right: none!important;
+    }
+
+    .image-title {
+        cursor: pointer;
+        position: relative;
+        width: 148px;
+        overflow: hidden;
+        line-height: 30px;
+        top: 0px;
+        background-color: rgb(0, 0, 0, 0.6);
+        overflow: hidden;
+        height: 30px;
+    }
+
+    .image-title div:last-child {
+        color: #fff;
+        position: absolute;
+        right: 0px;
+        padding: 0 5px;
+        line-height: 30px;
+        background-color: #000;
+    }
+
+    .el-image {
+
+        display: flex;
+
+    }
+    .image-main{
+        position: relative;
+    }
+    .diy-edge{
+        position: absolute;
+        top:5px;
+        left:5px;
+        z-index:1999;
+        cursor: pointer;
+        text-align: center;
+    }
+    .diy-edge .el-tag--mini {
+        min-width: 24px;
+        min-height: 24px;
+        line-height: 20px;
+    }
+    .el-menu-item {
+        padding:0 5px!important;
+    }
+</style>

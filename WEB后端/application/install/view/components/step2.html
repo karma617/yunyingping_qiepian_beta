@@ -1,0 +1,115 @@
+<template id="step2">
+    <div>
+        <h4>服务器环境</h4>
+
+        <table :loading="loading" class="twbox" style="width:100% " cellspacing="0" cellpadding="0" border="0">
+            <tr>
+                <th width="30%">项目</th>
+                <th width="35%">需求</th>
+                <th width="35%">当前</th>
+            </tr>
+            <tr v-for="env in envData" :class="{'err':env[4]!='ok'}">
+                <td v-text="env[0]"></td>
+                <td>{{env[2]}}</td>
+                <td v-text="env[3]"></td>
+                <!-- <td v-text="env[4]"></td> -->
+            </tr>
+        </table>
+        <h4>函数|扩展</h4>
+        <table :loading="loading" class="twbox" style="width:100% " cellspacing="0" cellpadding="0" border="0">
+            <tr>
+                <th width="30%">名称</th>
+                <th width="35%">类型</th>
+                <th width="35%">结果</th>
+            </tr>
+            <tr v-for="env in funData" :class="{'err':env[2]!='yes'}">
+                <td v-text="env[0]"></td>
+                <td v-text="env[3]"></td>
+                <td v-text="env[2]"></td>
+                <!-- <td v-text="env[4]"></td> -->
+            </tr>
+        </table>
+        <h4>目录权限</h4>
+        <table :loading="loading" class="twbox" style="width:100% " cellspacing="0" cellpadding="0" border="0">
+            <tr>
+                <th width="30%">目录|文件</th>
+                <th width="35%">需要权限</th>
+                <th width="35%">当前权限</th>
+            </tr>
+            <tr v-for="env in dirData" :class="{'err':env[5]!='ok'}">
+                <td v-text="env[2]"></td>
+                <td v-text="env[3]"></td>
+                <td v-text="env[4]"></td>
+                <!-- <td v-text="env[4]"></td> -->
+            </tr>
+        </table>
+    </div>
+
+</template>
+<script>
+    Vue.component('step2', {
+        template: '#step2',
+        prop: ['active', 'fdata'],
+        data() {
+            return {
+                loading:true,
+                flag:true,
+                envData: {},
+                dirData: {},
+                funData: {},
+            }
+        },
+        created() {
+            this.getData();
+        },
+        methods: {
+            getData() {
+                let _this = this
+                request({
+                    params: {
+                        s: 'index/step2',
+                    },
+                    method: 'post',
+                }).then(e => {
+                    let _data = e.data.data
+                    _this.loading=false
+                    _this.envData = _data.env
+                    _this.dirData = _data.dir
+                    _this.funData = _data.func
+                    _this.flag = e.data.flag
+                    _this.$emit('flag',_this.flag);
+
+                })
+            }
+        }
+    })
+</script>
+<style>
+    .twbox {
+        width: 100%;
+        font-size: 14px;
+        border: 1px solid #e7e7e7;
+    }
+
+    .twbox th {
+        height: 50px;
+        text-align: left;
+        background-color: #e7e7e7;
+    }
+    .twbox tr.err {
+        height: 50px;
+        text-align: left;
+        color:red;
+        background-color: #2ffc0638;
+    }
+
+    .twbox td {
+        height: 50px;
+        border-top: 1px solid #e7e7e7;
+    }
+
+    .twbox th:first-of-type,
+    .twbox td:first-of-type {
+        padding-left: 30px;
+    }
+</style>

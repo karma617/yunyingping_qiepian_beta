@@ -1,0 +1,78 @@
+<div v-cloak id="app" class="main-content">
+    <div class="form-body">
+        <div class="tip">{{_formData.title}} 配置</div>
+        <one-form :config="config" v-model="fdata" ref="ruleForm">
+            <template slot='form-item-end' slot-scope="scope">
+                <span v-if="scope.row.tip" style="left:400px;position: absolute;font-size:12px">提示: <span style="color:#666" v-html="unEscapeHTML(scope.row.tip)"></span></span>
+            </template>
+            <div slot='menuLeft'>
+                <el-button class="button-item" :loading="btnLoading" type="primary" @click="store('ruleForm')" size="small">
+                    保存
+                </el-button>
+                <el-button size="small" @click="window.history.go(-1)">返回</el-button>
+            </div>
+        </one-form>
+    </div>
+</div>
+{include file='common@components/one-form'}
+<script>
+    const _formData = {:json_encode($formData, 256)};
+    const app = new Vue({
+        el: '#app',
+        data() {
+            return{
+                btnLoading:false,
+                fdata:{},
+                config:{},
+            }
+        },
+        created(){
+            this.config.formdesc = _formData.config
+            this.fdata = _formData.data
+        },
+        methods:{
+            //表单验证
+            getFormPromise(form) {
+                return new Promise(resolve => {
+                    form.validate(res => {
+                        resolve(res);
+                    })
+                })
+            },
+            store(formName) {
+                let _this = this;
+                // 获取到组件中的form
+                const configForm = this.$refs.ruleForm.$refs.ruleForm;
+                // 使用Promise.all去校验结果,可加入多个表单
+                Promise.all([configForm].map(this.getFormPromise)).then(res => {
+                    const validateResult = res.every(item => !!item);
+                    if (validateResult) {
+                        _this.loading = true;
+                        let postData = {
+                            code:_formData.code,
+                            config:_this.fdata,
+                        }
+                        request({
+                            params: {
+                                s: 'one_pay/index/config',
+                            },
+                            method: 'post',
+                            data: postData
+                        }).then(e => {
+                            _this.loading = false;
+                            if (e.data.code == 0) {
+                                window.history.go(-1)
+                            } else {
+                                _this.$message.error(e.data.msg);
+                            }
+                        })
+
+                    } else {
+                        console.log('表单未校验通过');
+                    }
+                })
+                
+            },
+        }
+    })
+</script>

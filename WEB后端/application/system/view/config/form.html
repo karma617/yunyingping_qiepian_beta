@@ -1,0 +1,434 @@
+<div v-cloak id="app" class="main-content">
+    <div class="form-body" flex="main:left">
+        <el-col class="options" :span="4" style="min-width:200px">
+            <div class="options-item" :class="{'_selected':item.value == fdata.type}" @click="handleChange(item,index)"
+                v-for="(item,index) in options">
+                {{item.label}}
+            </div>
+        </el-col>
+        <el-col :span="20">
+            <one-form :config.sync="formConfig" v-model="fdata" :loading="loading" ref="ruleForm">
+                <div slot='menuLeft'>
+                    <el-button class="button-item" :loading="loading" type="primary" @click="store('ruleForm')"
+                        size="small">
+                        保存
+                    </el-button>
+                    <el-button size="small" @click="backpage()">返回</el-button>
+                </div>
+                <!-- 上传图片 -->
+                <template slot="image" slot-scope="scope">
+                    <one-upload class="one-attachment-simple-upload" v-loading="uploading" :disabled="uploading"
+                        :accept="'image'" @success="uploadSuccess($event,scope.row.prop)" flex="main:left cross:center">
+                        <el-avatar fit="scale-down" shape="square" size="60" :src="fdata[scope.row.prop]"></el-avatar>
+                    </one-upload>
+                </template>
+            </one-form>
+        </el-col>
+    </div>
+</div>
+<!-- 表单 -->
+{include file='common@components/one-form'}
+{include file='common@components/one-upload'}
+<script>
+    const app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                fdata: {},
+                group: '',
+                status: 1,
+                id: getQuery('id') || 0,
+                formConfig: {
+                    data: {
+                        type: 'input'
+                    },
+                    formdesc: {},
+                    labelWidth: '100px',
+                    rowSize: 1, //一行可以展示几列表单，默认为3列
+                },
+                uploading: false,
+                loading: false,
+                defaultConfigColumns: [
+                    {
+                        label: "标题 :",
+                        prop: "title",
+                        type: "input",
+                        content: "建议不超过4个字",
+                        rules: { required: true, message: '标题不能为空' },
+                        bind: {
+                            'placeholder': "建议不超过4个字",
+                        },
+                    },
+                    {
+                        label: "名称 :",
+                        prop: "name",
+                        type: "input",
+                        content: "支持字母、下划线，必须以字母开头",
+                        rules: { required: true, message: '标题不能为空' },
+                        bind: {
+                            'placeholder': "支持字母、下划线，必须以字母开头",
+                        },
+                    },
+                    {
+                        label: "提示语 :",
+                        prop: "tips",
+                        type: "input",
+                        bind: {
+                            'placeholder': "提示语",
+                        },
+                    },
+                ],
+                options: [
+                    {
+                        value: 'input',
+                        label: '[input]单行文本',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "input",
+                                bind: {
+                                    'placeholder': "单行文本默认值",
+                                },
+                            }
+                        ]
+                    },
+                    {
+                        value: 'textarea',
+                        label: '[textarea]多行文本',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "textarea",
+                                bind: {
+                                    'placeholder': "多行文本默认值",
+                                },
+                            }
+                        ]
+                    },
+                    {
+                        value: 'switch',
+                        label: '[switch]开关',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "input",
+                            },
+                            {
+                                label: "选项值 :",
+                                prop: "options",
+                                content: '多个请换行,示例 name:北京',
+                                type: "textarea",
+                                rules: { required: true, message: '选项值不能为空' },
+                                bind: {
+                                    'placeholder': "多个请换行,示例 name:北京",
+                                },
+                            },
+                        ]
+
+                    },
+                    {
+                        value: 'radio',
+                        label: '[radio]单选按钮',
+                        demoValue: 'sh',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "input",
+                                bind: {
+                                    'placeholder': "单选按钮默认值",
+                                },
+                            },
+                            {
+                                label: "选项值 :",
+                                prop: "options",
+                                content: '多个请换行,示例 name:北京',
+                                type: "textarea",
+                                rules: { required: true, message: '选项值能为空' },
+                                bind: {
+                                    'placeholder': "多个请换行,示例 name:北京",
+                                },
+                            },
+                            {
+                                label: "示例 :",
+                                prop: "demo",
+                                content: '多个请换行,示例 bj:北京',
+                                type: "radio",
+                                options: [
+                                    { label: '北京', value: 'bj' },
+                                    { label: '上海', value: 'sh' },
+                                ],
+                            }
+                        ]
+                    },
+                    {
+                        value: 'checkbox',
+                        label: '[checkbox]多选框',
+                        demoValue: ['bj'],
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "input",
+                                bind: {
+                                    'placeholder': "多选框默认值",
+                                },
+                            },
+                            {
+                                label: "选项值 :",
+                                prop: "options",
+                                content: '多个请换行,示例 name:北京',
+                                rules: { required: true, message: '选项值不能为空' },
+                                type: "textarea",
+                                bind: {
+                                    'placeholder': "多个请换行,示例 name:北京",
+                                },
+                            },
+                            {
+                                label: "示例 :",
+                                prop: "demo",
+                                content: '多个请换行,示例 bj:北京',
+                                type: "checkbox",
+                                options: [
+                                    { label: '北京', value: 'bj' },
+                                    { label: '上海', value: 'sh' },
+                                ],
+                            }
+                        ]
+                    },
+                    {
+                        value: 'select',
+                        label: '[select]下拉框',
+                        demoValue: 'bj',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "input",
+                                bind: {
+                                    'placeholder': "下拉框默认值",
+                                },
+                            },
+                            {
+                                label: "选项值 :",
+                                prop: "options",
+                                content: '多个请换行示例 name:北京',
+                                rules: { required: true, message: '选项值能为空' },
+                                type: "textarea",
+                                bind: {
+                                    'placeholder': "多个请换行,示例 name:北京",
+                                },
+                            },
+                            {
+                                label: "示例 :",
+                                prop: "select",
+                                content: '多个请换行,示例 bj:北京',
+                                type: "select",
+                                options: [
+                                    { label: '北京', value: 'bj' },
+                                    { label: '上海', value: 'sh' },
+                                ],
+                                bind: {
+                                    'value': [],
+                                },
+                            }
+                        ]
+                    },
+                    {
+                        value: 'date',
+                        label: '[date]日期',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "date",
+                                bind: {
+                                    'placeholder': "日期",
+                                },
+                            }
+                        ]
+
+                    },
+                    {
+                        value: 'time',
+                        label: '[time]时间',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "time",
+                                bind: {
+                                    'placeholder': "时间",
+                                },
+                            }
+                        ]
+                    },
+                    {
+                        value: 'datetime',
+                        label: '[datetime]日期+时间',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "datetime",
+                                bind: {
+                                    'placeholder': "日期+时间",
+                                },
+                            }
+                        ]
+                    },
+                    {
+                        value: 'image',
+                        label: '[image]图片',
+                        columns: [
+                            {
+                                label: "默认值 :",
+                                prop: "value",
+                                type: "image",
+                                bind: {
+                                    'placeholder': "",
+                                },
+                            }
+                        ]
+                    },
+                ],
+            };
+        },
+        created() {
+
+        },
+        methods: {
+            // 添加表单
+            handleChange(item, index) {
+                let _this = this;
+                _this.fdata.group = _this.group;
+                _this.fdata.id = _this.id;
+                _this.fdata.status = _this.status;
+                _this.fdata.type = item.value;
+                _this.fdata.demo = item.demoValue;
+                _this.formConfig.formdesc = _this.defaultConfigColumns.concat(item.columns);
+            },
+            //表单验证
+            getFormPromise(form) {
+                return new Promise(resolve => {
+                    form.validate(res => {
+                        resolve(res);
+                    })
+                })
+            },
+            store(formName) {
+                let _this = this;
+                // 获取到组件中的form
+                const configForm = this.$refs.ruleForm.$refs.ruleForm;
+                // 使用Promise.all去校验结果,可加入多个表单
+                Promise.all([configForm].map(this.getFormPromise)).then(res => {
+                    const validateResult = res.every(item => !!item);
+                    if (validateResult) {
+                        _this.loading = true;
+                        let postData = _this.fdata
+                        let _s = postData.id > 0 ? 'system/config/edit' : 'system/config/add'
+                        request({
+                            params: {
+                                s: _s,
+                            },
+                            method: 'post',
+                            data: postData
+                        }).then(e => {
+                            _this.loading = false;
+                            if (e.data.code == 0) {
+                                navigateTo({
+                                    s: 'system/config/index',
+                                    group: _this.group
+                                })
+                            } else {
+                                _this.$message.error(e.data.msg);
+                            }
+                        })
+
+                    } else {
+                        console.log('表单未校验通过');
+                    }
+                })
+
+            },
+            getDetail(id) {
+                let _this = this;
+                _this.loading = true;
+                request({
+                    params: {
+                        s: 'system/config/edit',
+                        group: _this.group,
+                        id: id
+                    },
+                    method: 'get',
+                }).then(e => {
+                    _this.loading = false;
+                    let res = e.data;
+                    if (res.code == 0) {
+                        let _index = _this.options.findIndex((v, i, a) => {
+                            return v.value == res.data.type;
+                        })
+                        _this.handleChange(this.options[_index], 0)
+                        _this.fdata = res.data;
+                        _this.fdata.demo = this.options[_index].demoValue;
+                    } else {
+                        _this.$message.error(e.data.msg);
+                    }
+                })
+            },
+            backpage() {
+                let _this = this
+                navigateTo({
+                    s: 'system/config/index',
+                    group: _this.group
+
+                })
+            },
+            //图片上传完成
+            uploadSuccess(file, prop) {
+                file = file.response.data.data.file
+                this.fdata[prop] = file
+            },
+        },
+        mounted: function () {
+            this.group = getQuery('group')
+            if (getQuery('id')) {
+                this.getDetail(getQuery('id'));
+            } else {
+                this.status = 1;
+                this.handleChange(this.options[0], 0)
+            }
+
+        }
+    });
+</script>
+<style>
+    .form-body .options {
+        background-color: #F3F5F6;
+        padding: 15px !important;
+        margin-right: 40px;
+        min-width: 180px;
+    }
+
+    .form-body .options .options-item:first-of-type {
+        margin-top: 0
+    }
+
+    .form-body .options .options-item {
+        height: 32px;
+        line-height: 32px;
+        margin-top: 10px;
+        background-color: #fff;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+    }
+
+    .form-body .options-item._selected {
+        color: #FFF !important;
+        background-color: #00C250 !important;
+    }
+</style>

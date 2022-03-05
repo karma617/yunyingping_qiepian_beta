@@ -1,0 +1,104 @@
+{include file="system@block/header" /}
+<body>
+    <div class="el-container" flex="dir:top" >
+        <div v-cloak id="_header">
+            <div v-if="pageShow" class="page-loading">
+                <div class="spinner">
+                    <div class="rect1"></div>
+                    <div class="rect2"></div>
+                    <div class="rect3"></div>
+                    <div class="rect4"></div>
+                    <div class="rect5"></div>
+                </div>
+            </div>
+            <header flex="dir:left main:justify" class="mall-header line">
+                <div class="aside-logo" :style="`width:${asideColl ? '60px' : '130px'}`">
+                    <div flex="main:center cross:center">LOGO</div>
+                </div>
+                
+                <div flex-box="1" flex="cross:center" style="line-height: 60px;">
+                    <div style="width:60px;text-align:center;font-size:20px" @click="_asideToggle()">
+                        <i :class="`el-icon-s-${asideColl ? 'unfold' : 'fold'}`"></i>
+                    </div>
+                    <el-breadcrumb separator-class="el-icon-arrow-right">
+                        <!-- <el-breadcrumb-item ><a :href="`${_scriptUrl}`">首页</a></el-breadcrumb-item> -->
+                        <el-breadcrumb-item v-for="item in oneBreadcrumb" :key="item.id" >{{item.title}}</el-breadcrumb-item>
+                      </el-breadcrumb>
+                </div>
+                <div flex=" cross:center">
+                   
+                    <one-theme :default="theme"></one-theme>
+                <el-menu default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="">
+                    <el-menu-item index="3">消息中心</el-menu-item>
+                    <el-menu-item index="1" loading="true" @click="clearCache">清理缓存</el-menu-item>
+                    <el-submenu index="2">
+                        <template slot="title">{$login['nick']}</template>
+                        <el-menu-item index="2-1"><el-link href="{:url('system/user/info')}">个人设置</el-link></el-menu-item>
+                        <el-menu-item index="2-2"><el-link href="{:url('system/publics/logout')}">退出登录</el-link></el-menu-item>
+                    </el-submenu>
+                </el-menu> 
+                </div>
+            </header>
+
+        </div>
+        <div class="layoutMain" flex="dir:left">
+            <div v-cloak id="_aside" flex="" >
+                <!-- 一级菜单 
+                <!-- 展示收起按钮
+                <div @click="isShowMenu = true" v-if="!isShowMenu" class="is-show-menu-2 el-icon-s-unfold"></div>-->
+                <div class="left-menu left-menu-1" :style="`width:${asideColl ? '60px' : '130px'}`">
+                    <el-tooltip :disabled="!asideColl" v-for="(leftMenu,idx) in leftMenus" :key="idx" :content="leftMenu.title" placement="right" >
+                    <div @click="menuClick1(leftMenu)" 
+                        class="menu-item menu-item-1" :class="{'active': breadCrumbArr[0] == leftMenu.id }"
+                        :flex="`main:${asideColl?'center':'left'} cross:center`">
+                        <i class="icon" :class="leftMenu.icon || 'el-icon-menu'"></i>
+                        <app-ellipsis v-show="!asideColl" :line="1">{{leftMenu.title}}</app-ellipsis>
+                    </div>
+                    </el-tooltip>
+                </div>
+                <!-- 二级菜单 -->
+
+                <div v-if="subMenu"
+                    class="left-menu left-menu-2" :class="{'left-menu-2-show': !isShowMenu}">
+                    <div v-for="(menu_1,idx) in subMenu" :key="idx" flex="dir:top">
+                        <div @click="menuClick2(menu_1,idx)" class="menu-item menu-item-2" flex="dir:left cross:center">
+                            <div class="menu-item-box" :class="{'active': breadCrumbArr[1] == menu_1.id}"
+                                flex="dir:left cross:center">
+                                <div class="icon-box">
+                                    <div v-if="menu_1.children">
+                                        <i v-if="menu_1.expand" class="el-icon-arrow-down"></i>
+                                        <i v-else class="el-icon-arrow-right"></i>
+                                    </div>
+                                </div>
+                                <app-ellipsis :line="1">{{menu_1.title}}
+                                </app-ellipsis>
+                            </div>
+                        </div>
+
+                        <!-- 三级菜单 -->
+                        <div v-if="menu_1.expand" v-for="menu_2 in menu_1.children" :key="menu_2.id" flex="dir:top">
+                            <div @click="menuClick3(menu_2)" class="menu-item menu-item-3" flex="dir:left cross:center">
+                                <div class="menu-item-box"
+                                    :class="{'active': breadCrumbArr[2] == menu_2.id ? true : false}"
+                                    flex="dir:left cross:center">
+                                    <div class="icon-box">
+                                        <div v-if="menu_2.children">
+                                            <i v-if="breadCrumbArr[1] == menu_2.id" class="el-icon-arrow-down"></i>
+                                            <i v-else class="el-icon-arrow-right"></i>
+                                        </div>
+                                    </div>
+                                    <app-ellipsis :line="1">{{menu_2.title}}</app-ellipsis>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="_layout_body" class="el-container is-vertical">
+                <main class="el-main" style="background-color: #fff;padding:0;margin:10px;">
+                    {__CONTENT__}
+                </main>
+            </div>
+        </div>
+    </div>
+{include file="system@block/footer" /}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no,email=no,address=no">
+    <title>{if condition="$oneCurMenu['url'] eq 'system/index/index'"}管理控制台{else /}{$oneCurMenu['title']}{/if} -  Powered by {:config('one.name')}</title>
+    <link rel="stylesheet" href="__STATIC__/lib/element-ui@2.15.5/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="__STATIC__/css/common.css">
+    <style id="chalk-style"></style>
+    <link rel="stylesheet" href="__STATIC__/css/flex.css">
+    <link rel="stylesheet" href="__STATIC__/css/layout.css">
+    <link href="__STATIC__/lib/mdi-font@5.5.55/css/materialdesignicons.min.css" media="all" rel="stylesheet" type="text/css" />
+    
+    <script src="__STATIC__/lib/vue@2.6.12/dist/vue.min.js"></script>
+    <script src="__STATIC__/lib/vuex@3.6.2/dist/vuex.min.js"></script>
+    <script src="__STATIC__/lib/vuex@3.6.2/vuex-persistedstate.umd.js"></script>
+    <script src="__STATIC__/lib/qs@6.9.4/dist/qs.js"></script>
+    <script src="__STATIC__/lib/axios@0.21.0/dist/axios.min.js"></script>
+    <script src="__STATIC__/lib/element-ui@2.15.5/lib/index.js"></script>
+    <script src="__STATIC__/lib/clipboard.min.js?v=2.0.6"></script>
+
+    <script>
+        const _csrf = '';
+        const _token = '{$Request.token}';
+        const _oneMenus = JSON.parse('<?php echo json_encode($oneMenus)?>');
+        const _oneCurMenu = JSON.parse('<?php echo json_encode($oneCurMenu)?>');
+        const _oneCurMenuArr = JSON.parse('<?php echo json_encode($oneCurMenuArr)?>');
+        const _oneBreadcrumb = JSON.parse('<?php echo json_encode($oneBreadcrumb)?>');
+        const _scriptUrl = '/<?php echo config('sys.admin_path')?>'
+    </script>
+    <script src="__STATIC__/js/common.js?v=1.0.0"></script>
+    <script src="__STATIC__/js/admin_state.js?v=1.0.0"></script>
+
+</head>
+

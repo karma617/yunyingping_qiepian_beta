@@ -1,0 +1,128 @@
+* {
+    box-sizing: border-box;
+}
+html, body {
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    background: #fafafa!important;
+}
+.login .bg {
+    width: 100%;
+    height: 300px;
+    background: #00C250;
+}
+.login .content {
+    width: 450px;
+    min-height: 448px;
+    background: #fff;
+    border-radius: 4px;
+    padding: 60px 65px 40px;
+    position: absolute;
+    top: 160px;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+.login .content input {
+    width:100%;
+    height:44px;
+    line-height:44px;
+    margin-top:16px;
+    border:1px solid #dbdbdb;
+    border-radius:2px
+}
+.login .content input:focus {
+    border: 1px solid #00C250;
+    color: #00C250;
+}
+.el-input__suffix  {
+    top: 10px;
+}
+.el-input__prefix  {
+    top: 10px;
+}
+.el-form-item.is-error{
+    color:red!important
+}
+
+/* 加载动画开始 */
+.page-loading {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    /* 水平居中 */
+    align-items: center;
+    /* 垂直居中 */
+    z-index: 99999;
+}
+
+.page-loading .spinner {
+    margin: 100px auto;
+    width: 50px;
+    height: 60px;
+    text-align: center;
+    font-size: 10px;
+}
+
+.page-loading .spinner>div {
+    background-color: #67C23A;
+    height: 100%;
+    width: 6px;
+    display: inline-block;
+    -webkit-animation: stretchdelay 1.2s infinite ease-in-out;
+    animation: stretchdelay 1.2s infinite ease-in-out;
+}
+
+.page-loading .spinner .rect2 {
+    -webkit-animation-delay: -1.1s;
+    animation-delay: -1.1s;
+}
+
+.page-loading .spinner .rect3 {
+    -webkit-animation-delay: -1.0s;
+    animation-delay: -1.0s;
+}
+
+.page-loading .spinner .rect4 {
+    -webkit-animation-delay: -0.9s;
+    animation-delay: -0.9s;
+}
+
+.page-loading .spinner .rect5 {
+    -webkit-animation-delay: -0.8s;
+    animation-delay: -0.8s;
+}
+
+@-webkit-keyframes stretchdelay {
+
+    0%,
+    40%,
+    100% {
+        -webkit-transform: scaleY(0.4)
+    }
+
+    20% {
+        -webkit-transform: scaleY(1.0)
+    }
+}
+
+@keyframes stretchdelay {
+
+    0%,
+    40%,
+    100% {
+        transform: scaleY(0.4);
+        -webkit-transform: scaleY(0.4);
+    }
+
+    20% {
+        transform: scaleY(1.0);
+        -webkit-transform: scaleY(1.0);
+    }
+}
+
+/* 加载动画结束 */

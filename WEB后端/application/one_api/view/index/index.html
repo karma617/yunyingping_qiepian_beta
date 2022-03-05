@@ -1,0 +1,181 @@
+<div v-cloak id="app" class="main-content">
+    <one-table :option="tableOption" :data="tableData" :loading="loading" @current-change="handleCurrentChange" @size-change="handleSizeChange">
+        <!-- 工具菜单 -->
+        <template slot="menuLeft">
+            <el-button type="primary" size="mini" @click="handleAdd()">添加授权</el-button>
+            <i class="el-icon-info"></i>调用示例 <span>{:get_domain()}/api.php/one_api/test/index</span>
+        </template>
+        <!-- 自定义列 -->
+        <template slot="status" slot-scope="scope">
+            <el-switch v-model="scope.row.status" :disabled="scope.row.system" :active-value="1" :inactive-value="0"
+            @change="changeSwitch(scope.row)">
+        </el-switch>
+    </template>
+    <template slot="secret" slot-scope="scope">
+            <div :data-clipboard-text="scope.row.secret" class="copy-text" @click="copyText">{{scope.row.secret}}</div>
+        </template>
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            <el-button size="mini" :disabled="scope.row.system" class="_tool" @click="handleAdd(scope.row, scope.index)">
+                <i class="el-icon-edit"></i>
+            </el-button>
+            
+            <el-popconfirm
+                confirm-button-text='好的'
+                cancel-button-text='不用了'
+                icon="el-icon-info"
+                icon-color="red"
+                title="删除不能恢复,确定删除吗？"
+                @confirm="handleDel(scope.row, scope.index)"
+            >
+            <el-button :disabled="scope.row.system" slot="reference" size="mini" class="_tool" type="danger">
+                <i class="el-icon-delete"></i>
+            </el-button>
+            </el-popconfirm>
+        </template>
+    </one-table>
+</div>
+
+
+
+{include file='common@components/one-table'}
+<script type="text/javascript">
+    const app = new Vue({
+        el: '#app',
+        data() {
+
+            return {
+                loading:false,
+                tableData: [],
+                tableOption: {
+                    index: true,
+                    header: true,
+                    selection: false,
+                    operates: {width: 100},
+                    page: {},
+                    size: 'mini',
+                    column: [{
+                            label: '状态',
+                            prop: 'status',
+                            width:80,
+                            slot: true,
+                        }, {
+                            label: '名称',
+                            align:'left',
+                            prop: 'name',
+                        }, {
+                            label: '密钥',
+                            prop: 'secret',
+                            slot: true,
+                        }
+                    ]
+                }
+            };
+        },
+
+        created() {
+            this.getData()
+        },
+        methods:{
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.tableOption.page.page = currentPage;
+                _this.getData();
+            },
+             //删除行
+             handleDel (row, index) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'one_api/index/del/',
+                    },
+                    data:{id:row.id},
+                    method: 'post'
+                }).then(e => {
+                    _this.tableData.splice(index, 1)
+                	_this.loading = false
+                })
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.tableOption.page.limit = val
+                _this.getData();
+            },
+            //编辑弹窗
+            handleAdd(row,index) {
+                let _editing = !('undefined' === typeof row)
+                let _name = _editing ? row.name : ''
+                let _id = _editing ? row.id : ''
+                let _this = this
+                let _promptTitle = _editing ? "编辑" : "添加"
+                let _url = _editing ? "one_api/index/edit" : "one_api/index/add"
+                this.$prompt('', _promptTitle+' 接口服务', {
+                    showClose: false,
+                    closeOnClickModal: false,
+                    inputValue:_name || '',
+                    inputPattern: /^[A-Za-z0-9_\u4e00-\u9fa5]+$/,
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                }).then((e) => {
+                    _this.loading = true
+                
+                    request({
+                        params: {
+                            s: _url
+                        },
+                        data: {'name':e.value,'id':_id || 0},
+                        method: 'post'
+                    }).then(res => {
+                        _this.loading = false
+                        if(res.data.code == 0){
+                            
+                            _this.getData()
+                            
+                        }
+                    })
+                }).catch((res) => {
+                    _this.loading = false
+                })
+                
+            },
+            //改变状态
+            changeSwitch(row) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'one_api/index/status',
+                    },
+                    data:{
+                        id: row.id,
+                        val: row.status,
+                        field:'status'
+                    },
+                    method: 'post',
+                }).then(e => {
+                    _this.loading = false
+                })
+            },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'one_api/index/index',
+                        page: _this.tableOption.page.currentPage,
+                        limit: _this.tableOption.pageSize,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableData = e.data.data
+                    _this.tableOption.page.total = e.data.count;
+                })
+            },
+        }
+    })
+</script>

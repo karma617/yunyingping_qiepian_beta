@@ -1,0 +1,250 @@
+<div v-cloak id="app" class="main-content">
+    <div style="width: 100%;">
+        <h3>基础信息</h3>
+        <el-row :gutter="6" style="padding-bottom: 10px;">
+            <el-col :span="4" :md="8" :lg="4" :sm="12" :xs="24">
+                <el-card class="card" shadow="never" :body-style="{'padding':'5px'}">
+                    <div flex="main:left">
+                        <el-image style="width: 60px; height: 60px;margin-right: 5px;" :src="_member.headimg" fit="cover">
+                            <div slot="error" style="height: 60px;background: #f5f7fa;" flex="main:center cross:center">
+                                <i class="mdi mdi-account-circle-outline"
+                                    style="display:block;font-size: 60px;color:#c1c1c1"></i>
+                            </div>
+                        </el-image>
+                        <div flex="dir:top main:left cross:top" >
+                            <div>昵称:{{_member.nickname}}</div>
+                            <div>帐号:{{_member.username}}</div>
+                            <div>等级:{{_member.level_name}}</div>
+                        </div>
+                    </div>
+                </el-card>
+            </el-col>
+            <el-col :span="4" :md="8" :lg="4" :sm="12" :xs="24">
+              <el-card class="card" shadow="never" :body-style="{'padding':'5px'}" >
+                <div flex="dir:top main:left cross:top" >
+                    <div>手机:{{_member.mobile}}</div>
+                    <div>邮箱:{{_member.mail}}</div>
+                    <div>最后登录:{{_member.last_login_time}}</div>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="4" :md="8" :lg="4" :sm="12" :xs="24">
+              <el-card class="card" shadow="never" :body-style="{'padding':'5px'}">
+                  <div style="font-size: 10px;color:#dcdfe6">可用余额</div>
+                  <div style="font-size: 35px;text-align:center;width:100%;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" >{{_member.balance}}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="4" :md="8" :lg="4" :sm="12" :xs="24">
+              <el-card class="card" shadow="never" :body-style="{'padding':'5px'}">
+                  <div style="font-size: 10px;color:#dcdfe6">冻结余额</div>
+                  <div style="font-size: 35px;text-align:center;width:100%;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" >{{_member.frozen_balance}}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="4" :md="8" :lg="4" :sm="12" :xs="24">
+              <el-card class="card" shadow="never" :body-style="{'padding':'5px'}">
+                  <div style="font-size: 10px;color:#dcdfe6">可用积分</div>
+                  <div style="font-size: 35px;text-align:center;width:100%;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" >{{_member.point}}</div>
+              </el-card>
+            </el-col>
+            <el-col :span="4" :md="8" :lg="4" :sm="12" :xs="24">
+              <el-card class="card" shadow="never" :body-style="{'padding':'5px'}">
+                  <div style="font-size: 10px;color:#dcdfe6">成长经验</div>
+                  <div style="font-size: 35px;text-align:center;width:100%;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;" >{{_member.growth}}</div>
+              </el-card>
+            </el-col>
+           
+            
+            
+          </el-row>
+    </div>
+    <one-table :option="option" :data="data" :loading="loading"  @current-change="handleCurrentChange" @size-change="handleSizeChange">
+        <!-- 工具菜单 -->
+        <template slot="menuLeft">
+            <div class="form-box" flex="main:left">
+                <el-select size="mini" v-model="fdata.account_type" placeholder="请选择" clearable style="margin-right: 5px;">
+                    <el-option v-for="item in accountTypeList" :key="item.value" :label="item.label" :value="item.value">
+                    </el-option>
+                </el-select>
+                <el-date-picker
+                    style="margin-right: 5px;"
+                    size="mini"
+                    format="yyyy 年 MM 月 dd 日"
+                    value-format="yyyy-MM-dd"
+                    v-model="fdata.time_rage"
+                    type="daterange"
+                    range-separator="至"
+                    start-placeholder="开始日期"
+                    end-placeholder="结束日期">
+                </el-date-picker>
+                <el-button type="primary" size="mini" @click="getData">筛选</el-button>
+                
+            </div>
+        </template>
+       
+        <!-- 自定义操作列 -->
+        
+    </one-table>
+</div>
+{include file="common@components/one-table"}
+<script>
+    const _member = {:json_encode((array)$member, 1)} ;
+    new Vue({
+        el: "#app",
+        data() {
+            return {
+                loading: false,
+                data: [],
+                accountTypeList :[
+                    {
+                        'label': '可用余额',
+                        'value': 'balance',
+                    },
+                    {
+                        'label': '冻结余额',
+                        'value': 'frozen_balance',
+                    },
+                    {
+                        'label': '可用积分',
+                        'value': 'point',
+                    },
+                    {
+                        'label': '成长经验',
+                        'value': 'growth',
+                    },
+                ],
+                option: {
+                    index: true,
+                    header: true,
+                    selection: false,
+                    operates: false,
+                    page: {},
+                    size: "mini",
+                    column: [
+                        {
+                            label: "账户类型",
+                            prop: "account_type_text",
+                        },
+                        {
+                            label: "数据金额",
+                            prop: "account_data",
+                        },
+                        {
+                            label: "发生方式",
+                            prop: "type_name",
+                        },
+                        {
+                            label: "备注",
+                            prop: "remark",
+                        },
+                        {
+                            label: "发生时间",
+                            prop: "create_time",
+                        },
+                    ]
+                },
+                fdata:{
+                    id:_member.id,
+                    account_type:'',
+                    time_rage:[]
+                },
+            }
+        },
+        created() {
+            this.getData()
+        },
+        methods: {
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                let postData = cloneDeep(_this.fdata);
+                request({
+                    url: "member/account/index",
+                    params: {
+                        page: _this.option.page.currentPage,
+                        limit: _this.option.page.pageSize,
+                    },
+                    data:postData,
+                    method: "post"
+                }).then(e => {
+                    _this.loading = false;
+                    _this.data = e.data.data.list;
+                    _this.option.page.total = e.data.data.count;
+                })
+            },
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.option.page.currentPage = currentPage;
+                _this.getData();
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.option.page.pageSize = val;
+                _this.getData();
+            },
+            //改变状态
+            changeSwitch(row) {
+                let _this = this;
+                _this.loading = true;
+                request({
+                    params: {
+                        s: "member/level/status/",
+                        id: row.id,
+                        val: row.status,
+                    },
+                    method: "post"
+                }).then(e => {
+                    _this.loading = false;
+                })
+            },
+           
+            //删除行
+            handleDel (row, index) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: "member/level/del/",
+                		id:row.id,
+                	},
+                	method: "post"
+                }).then(e => {
+                	_this.loading = false;
+                    e.data.code == 0 && _this.data.splice(index, 1);
+                })
+            },
+            //添加
+            handleAdd() {
+                let _this = this
+                navigateTo({
+                    s: "member/level/edit",
+                })
+            },
+            //编辑
+            handleEdit(row, index){
+                let _this = this
+                navigateTo({
+                    s: "member/level/edit",
+                    id:row.id,
+                })
+            },
+           
+        }
+    })
+</script>
+<style>
+    h3{
+        border-left:5px solid #00C250;
+        padding-left:10px;
+    }
+    .card{
+        min-width: 215px;
+        height: 70px;
+        margin-bottom: 5px;
+    }
+    .form-box .el-input {
+        width: 120px;
+    }
+</style>

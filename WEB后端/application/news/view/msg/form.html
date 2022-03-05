@@ -1,0 +1,154 @@
+<div v-cloak id="app" class="main-content">
+    <div class="form-body">
+        <one-form :config="config" v-model="fdata" ref="ruleForm">
+            <div slot="menuLeft">
+                <el-button
+                    class="button-item"
+                    :loading="btnLoading"
+                    type="primary"
+                    @click="store('ruleForm')"
+                    size="small"
+                >
+                    保存
+                </el-button>
+                <el-button size="small" @click="backpage()">返回</el-button>
+            </div>
+            <template
+                slot="form-item-end"
+                slot-scope="scope"
+                v-if="scope.row.tip"
+            >
+                <span style="left: 400px; position: absolute; font-size: 12px"
+                    >{{scope.row.tip}}</span
+                >
+            </template>
+        </one-form>
+    </div>
+</div>
+{include file='common@components/one-form'} {include
+file='common@components/one-upload'}
+<script>
+    const _formData = {:json_encode((array)$formData, 1)} ;
+    const app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                uploading: false,
+                loading: false,
+                btnLoading: false,
+                config: {
+                    formdesc: [
+                        {
+                            label: '公告标题 :',
+                            prop: 'title',
+                            type: 'input',
+                            rules: [
+                                { required: true, message: '公告标题不能为空' },
+                            ],
+                            bind: {
+                                placeholder: '请输入公告标题',
+                            },
+                        },
+                        {
+                            label: '公告内容 :',
+                            prop: 'content',
+                            type: 'textarea',
+                            rules: [
+                                { required: true, message: '公告内容不能为空' },
+                            ],
+                            bind: {
+                                placeholder: '请输入公告内容',
+                            },
+                        },
+                        {
+                            label: '状态 :',
+                            prop: 'status',
+                            type: 'radio',
+                            options: [
+                                {
+                                    label: '发布',
+                                    value: 1,
+                                },
+                                {
+                                    label: '存档',
+                                    value: 0,
+                                },
+                            ],
+                        },
+                    ],
+                    labelWidth: '200px',
+                    rowSize: 1, //一行可以展示几列表单，默认为3列
+                },
+                fdata: {
+                    id: 0,
+                    name: '',
+                    min_exper: 0,
+                    max_exper: 0,
+                    discount: 100,
+                    intro: '',
+                    expire: 0,
+                    default: 0,
+                    status: 1,
+                },
+            };
+        },
+        created() {},
+        mounted() {
+            if (Object.keys(_formData).length > 0) {
+                for(let key in this.fdata){
+                    this.fdata[key] = _formData[key];
+                }
+            }
+        },
+        methods: {
+            //表单验证
+            getFormPromise(form) {
+                return new Promise((resolve) => {
+                    form.validate((res) => {
+                        resolve(res);
+                    });
+                });
+            },
+            store(formName) {
+                let _this = this;
+                // 获取到组件中的form
+                const configForm = this.$refs.ruleForm.$refs.ruleForm;
+                // 使用Promise.all去校验结果,可加入多个表单
+                Promise.all([configForm].map(this.getFormPromise)).then(
+                    (res) => {
+                        const validateResult = res.every((item) => !!item);
+                        if (validateResult) {
+                            _this.loading = true;
+                            request({
+                                params: {
+                                    s: 'news/msg/edit',
+                                },
+                                method: 'post',
+                                data: _this.fdata,
+                            }).then((e) => {
+                                _this.loading = false;
+                                if (e.data.code == 0) {
+                                    _this.backpage();
+                                } else {
+                                    _this.$message.error(e.data.msg);
+                                }
+                            });
+                        } else {
+                            console.log('表单未校验通过');
+                        }
+                    }
+                );
+            },
+            backpage() {
+                navigateTo({
+                    s: 'news/msg/index',
+                });
+            },
+            //图片上传完成
+            uploadSuccess(file, prop) {
+                file = file.response.data.data.file;
+                this.fdata[prop] = file;
+            },
+        },
+    });
+</script>

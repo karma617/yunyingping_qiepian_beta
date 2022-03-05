@@ -1,0 +1,175 @@
+<div v-cloak id="app" class="main-content">
+    <one-table
+        :option="option"
+        :data="data"
+        :loading="loading"
+        @current-change="handleCurrentChange"
+        @size-change="handleSizeChange"
+    >
+        <template slot="menuRight">
+            <div class="form-box" flex="main:left">
+                <el-select
+                    size="mini"
+                    v-model="search.type"
+                    placeholder="请选择订单类型"
+                    clearable
+                    style="margin-right: 5px"
+                >
+                    <el-option
+                        v-for="item in _type_select"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                    >
+                    </el-option>
+                </el-select>
+                <el-input
+                    type="text"
+                    v-model="search.keyword"
+                    size="mini"
+                    clearable
+                    placeholder="订单号|支付单号"
+                    style="width: 240px; margin-right: 5px"
+                ></el-input>
+                <el-button type="primary" size="mini" @click="getData"
+                    >筛选</el-button
+                >
+            </div>
+        </template>
+        <!-- 自定义列 -->
+        <template slot="status" slot-scope="scope">
+            <el-tag type="danger" v-if="scope.row.status == 0">待付款</el-tag>
+            <el-tag v-if="scope.row.status == 1">已完成</el-tag>
+        </template>
+        <template slot="type" slot-scope="scope">
+            <el-tag v-if="scope.row.type == 0">会员组续费</el-tag>
+            <el-tag v-if="scope.row.type == 1">普通商品</el-tag>
+        </template>
+    </one-table>
+</div>
+{include file="common@components/one-table"}
+<script>
+    const _type_select = [
+        {
+            value: 0,
+            label: '会员组续费',
+        },
+        {
+            value: 1,
+            label: '普通商品',
+        },
+    ];
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                loading: false,
+                data: [],
+                option: {
+                    index: false,
+                    header: true,
+                    selection: false,
+                    operates: false,
+                    page: {},
+                    size: 'mini',
+                    column: [
+                        {
+                            label: '订单ID',
+                            prop: 'id',
+                        },
+                        {
+                            label: '订单号',
+                            prop: 'order_sn',
+                        },
+                        {
+                            label: '订单类型',
+                            prop: 'type',
+                            slot: true,
+                        },
+                        {
+                            label: '用户id',
+                            prop: 'member_id',
+                        },
+                        {
+                            label: '商品id',
+                            prop: 'goods_id',
+                        },
+                        {
+                            label: '商品名',
+                            prop: 'goods_name',
+                        },
+                        {
+                            label: '订单金额',
+                            prop: 'price',
+                        },
+                        {
+                            label: '购买数量',
+                            prop: 'number',
+                        },
+                        {
+                            label: '备注',
+                            prop: 'remark',
+                        },
+                        {
+                            label: '第三方支付单号',
+                            prop: 'trade_no',
+                        },
+                        {
+                            label: '状态',
+                            prop: 'status',
+                            slot: true,
+                        },
+                        {
+                            label: '创建时间',
+                            prop: 'create_time',
+                        },
+                        {
+                            label: '支付时间',
+                            prop: 'update_time',
+                        },
+                    ],
+                },
+                search: {
+                    type: '',
+                    keyword: '',
+                },
+            };
+        },
+        created() {
+            this.getData();
+        },
+        methods: {
+            // 获取数据
+            getData() {
+                let _this = this;
+                _this.loading = true;
+                let postData = cloneDeep(_this.search);
+                request({
+                    params: {
+                        s: 'goods/order/index',
+                        page: _this.option.page.currentPage,
+                        limit: _this.option.page.pageSize,
+                    },
+                    data: postData,
+                    method: 'post',
+                }).then((e) => {
+                    _this.loading = false;
+                    _this.data = e.data.data.list;
+                    _this.option.page.total = e.data.data.count;
+                });
+            },
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.option.page.currentPage = currentPage;
+                _this.getData();
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.option.page.pageSize = val;
+                _this.getData();
+            },
+        },
+    });
+</script>

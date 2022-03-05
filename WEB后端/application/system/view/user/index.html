@@ -1,0 +1,181 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <one-table :option="tableOption" :data="tableData" :loading="loading" @current-change="handleCurrentChange" @size-change="handleSizeChange">
+        <!-- 工具菜单 -->
+        <template slot="menuLeft">
+            <el-button type="primary" size="mini" @click="handleAdd">添加</el-button>
+        </template>
+        <!-- 自定义列 -->
+        <template slot="status" slot-scope="scope">
+            <el-switch :disabled="scope.row.id==1" v-model="scope.row.status" :active-value="1" :inactive-value="0"
+                @change="changeSwitch(scope.row, scope.index)">
+            </el-switch>
+        </template>
+        <template slot="has_roles" slot-scope="scope" >
+            <el-tag
+                style="margin:5px"
+                v-for="item in scope.row.has_roles"
+                :key="item.label"
+                type="success"
+                size="mini"
+                effect="plain">
+                {{ item.name }}
+            </el-tag> 
+        </template>
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            <el-button size="mini" :disabled="scope.row.id==1" class="_tool" @click="handleEdit(scope.row, scope.index)">
+                <i class="el-icon-edit"></i>
+            </el-button>
+            
+            <el-popconfirm
+                confirm-button-text='好的'
+                cancel-button-text='不用了'
+                icon="el-icon-info"
+                icon-color="red"
+                title="删除不能恢复,确定删除吗？"
+                @confirm="handleDel(scope.row, scope.index)"
+            >
+            <el-button :disabled="scope.row.id==1" slot="reference" size="mini" class="_tool" type="danger">
+                <i class="el-icon-delete"></i>
+            </el-button>
+            </el-popconfirm>
+        </template>
+    </one-table>
+</div>
+
+{include file='common@components/one-tabs'}
+{include file='common@components/one-table'}
+
+<script>
+    const _tabData= {:json_encode((array)$tabData, 1)} ;
+    new Vue({
+        el: '#app',
+        created(){
+            this.getData()
+        },
+        methods: {
+            // 切换标签
+            handleChange(item) {
+                window.location.href = item.url
+            },
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.tableOption.page.currentPage = currentPage;
+                _this.getData();
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.tableOption.page.pageSize = val
+                _this.getData();
+            },
+            //改变状态
+            changeSwitch(row) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/user/statusUser/',
+                        id: row.id,
+                        val: row.status,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                })
+            },
+             //添加
+             handleAdd() {
+                let _this = this
+                navigateTo({
+                    s: 'system/user/addUser',
+                })
+            },
+            //编辑
+            handleEdit(row, index) {
+                navigateTo({
+                    s: 'system/user/editUser',
+                    id: row.id
+                })
+            },
+            //删除
+            handleDel(row, index) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/user/delUser',
+                        id:row.id,
+                    },
+                method: 'post'
+                }).then(e => {
+                    if(e.data.code == 0){
+                        _this.tableData.splice(index, 1)
+                    }
+                    _this.loading = false
+                }).catch((res) => {
+                    _this.loading = false
+                })
+            },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/user/index/',
+                        page: _this.tableOption.page.currentPage,
+                        limit: _this.tableOption.page.pageSize,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableData = e.data.data
+                    _this.tableOption.page.total = e.data.count;
+                })
+            },
+        },
+        data() {
+            return {
+                loading:false,
+                tabData: _tabData,
+                tableData: [],
+                tableOption: {
+                    index: true,
+                    header: true,
+                    selection: false,
+                    operates: {width: 120},
+                    page: {},
+                    size: 'mini',
+                    column: [{
+                            label: '状态',
+                            prop: 'status',
+                            width:80,
+                            slot: true,
+                        }, {
+                            label: '用户名',
+                            prop: 'username'
+                        }, {
+                            label: '昵称',
+                            prop: 'nick'
+                        }, {
+                            label: '角色',
+                            prop: 'has_roles',
+                            slot: true,
+                        }, {
+                            label: '最后登陆时间',
+                            prop:'last_login_time',
+                            width:160,
+                        }, {
+                            label: '最后登陆IP',
+                            prop:'last_login_ip',
+                            width:160,
+                        }
+                    ]
+                }
+            };
+        }
+    })
+</script>

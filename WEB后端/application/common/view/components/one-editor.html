@@ -1,0 +1,17 @@
+<template id="one-editor">
+    <div id="my-editor" class="editor-wrapper"></div>
+</template>
+
+<!-- 引入组件 -->
+<script src="__STATIC__/lib/wangeditor@4.7.0/wangEditor.js"></script>
+<link href="__STATIC__/lib/wangeditor@4.7.0/wangEditor.css" rel="stylesheet">
+<script>
+    "use strict"; Vue.component("one-editor", { template: "#one-editor", props: { value: { type: String, default: "" }, isClear: { type: Boolean, default: !1 } }, data: function () { return { editor: null, editorContent: null } }, watch: { isClear: function (t) { t && (this.editor.txt.clear(), this.editorContent = null) } }, mounted: function () { this.initEditor() }, methods: { getText: function () { this.editor.txt.text() }, setText: function () { this.editor.txt.html(this.value) }, initEditor: function () { var t = this, e = window.wangEditor; this.editor = new e(document.getElementById("my-editor")), this.editor.config.uploadImgShowBase64 = !1, this.editor.config.showLinkImg = !1, this.editor.config.uploadImgServer = "{:url('system/annex/upload')}", this.editor.config.uploadImgHeaders = {}, this.editor.config.uploadFileName = "file", this.editor.config.uploadImgMaxSize = 2097152, this.editor.config.uploadImgMaxLength = 6, this.editor.config.uploadImgTimeout = 18e4, this.editor.config.menus = ["head", "bold", "fontSize", "fontName", "italic", "underline", "strikeThrough", "indent", "lineHeight", "foreColor", "backColor", "link", "list", "todo", "justify", "quote", "emoticon", "image", "video", "table", "code", "splitLine", "undo", "redo"], this.editor.config.fontNames = ["宋体", "微软雅黑", "Arial", "Tahoma", "Verdana"], this.editor.config.emotions = [{ title: "默认", type: "image", content: [{ alt: "[微笑]", type: "face", src: "http://img.t.sinajs.cn/t4/appstyle/expression/ext/normal/e3/2018new_weixioa02_org.png" }, { alt: "[可爱]", type: "face", src: "http://img.t.sinajs.cn/t4/appstyle/expression/ext/normal/09/2018new_keai_org.png" }, { alt: "[空星]", src: "http://img.t.sinajs.cn/t4/appstyle/expression/ext/normal/ff/hot_blankstar_org.png" }] }, { title: "emoji", type: "emoji", content: ["😀", "😃", "😄", "😁", "😆", "🤣", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗", "😚", "🙂", "🤗", "🤔", "😳", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😒", "😓", "😕", "🙃", "😲", "🙁", "😖", "😤", "😭", "😨", "😬", "😱", "😡", "😠", "😷", "🤒", "🤧", "🤡", "😈", "💀", "👻", "👽", "💩", "😺", "😸", "😹", "😻", "😼", "😽", "🙀", "😿", "😾", "💖", "💗", "💟", "💤", "💢", "👈", "👉", "☝", "👆", "✌", "👌", "👍", "👌", "👎", "✊", "🤛", "🤜", "👏", "🙏", "🤝", "🌹", "🥀"] }], this.editor.config.uploadImgHooks = { fail: function (t, e, o) { console.log(t, e, o) }, success: function (t, e, o) { console.log(t, e, o) }, timeout: function (t, e) { console.log(t, e) }, error: function (t, e) { console.log(t, e) }, customInsert: function (t, e, o) { for (var i = 0; i < 1; i++) { t(e.pic_path) } } }, this.editor.config.onchange = function (e) { var o = e; o = o.replace(/\bm.*?;/, "width:300px"), t.editorContent = o, t.$emit("change", t.editorContent) }, this.editor.config.zIndex = 2, this.editor.create(), this.setText() } } });
+</script>
+<style lang="less" scoped>
+    .my-editor {
+        .editor-wrapper {
+            text-align: left;
+        }
+    }
+</style>

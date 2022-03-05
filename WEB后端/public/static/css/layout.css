@@ -1,0 +1,248 @@
+html, body {
+    height: 100%;
+    padding: 0;
+    margin: 0;
+}
+.el-header {
+    padding: 0;
+}
+
+.el-container {
+    min-width:1008px;
+    height: 100%;
+}
+#_header{
+    border-bottom: solid 1px #e6e6e6;
+
+}
+#_header .el-menu--horizontal{
+    border-bottom: 0px;
+
+}
+#_header .aside-logo {
+   
+    width:130px;
+    background: #444444;
+    color: #f2f2f2;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+ 
+    
+}
+
+#_header .aside-logo:hover {
+    background: #30353a;
+    color: #fff;
+}
+
+#_header .aside-logo div {
+
+    width: 100%;
+    height: 60px;
+    line-height: 60px;
+}
+
+#_header .aside-logo img {
+    height: calc(40px + 2px);
+    width: calc(40px + 2px);
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    display: block;
+    margin-top: 10px;
+}
+/*新左侧菜单 start*/
+#_aside {
+    position: relative;
+    
+}
+
+
+#_aside .is-show-menu-2 {
+    position: absolute;
+    
+    background: #F3F3F3;
+    color: #A1A4A9;
+
+    left: 130px;
+    top: 0px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+#_aside .menu-item {
+    height: 60px;
+    padding: 10px;
+}
+
+#_aside .left-menu {
+    width: 130px;
+    height: calc(100vh - 61px);
+    overflow-y: auto;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#_aside .menu-item-box.active {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    background: #ebedf0;
+    cursor: pointer;
+}
+
+/*一级菜单 start*/
+
+/* 滚动条滑块 */
+#_aside .left-menu-1::-webkit-scrollbar-thumb {
+    background: rgb(255,255,255,0.5);
+    padding: 0;
+    border: none;
+    width: 20px;
+}
+
+#_aside .left-menu-1 {
+    background: #444444;
+    cursor: pointer;
+}
+
+#_aside .menu-item-1 {
+    color: #bbb;
+}
+
+#_aside .menu-item-1.active {
+    color: #fff;
+    color:var(--one-diy-color-0);
+    background: rgba(0, 0, 0, 0.25);
+}
+
+#_aside .menu-item-1.hover {
+    color: #FFFFFF;
+    background: #666666;
+    cursor: pointer;
+}
+
+#_aside .menu-item-1 .icon {
+    margin-right: 5px;
+    font-size:18px;
+}
+
+/*一级菜单 end*/
+
+/*二级菜单 start*/
+
+#_aside .left-menu-2 {
+    border-right: 1px solid #E6E6E6;
+    position: relative;
+
+}
+
+#_aside .left-menu-2-show {
+    display: none;
+}
+
+#_aside .left-menu-2 .is-show-menu-1 {
+    position: absolute;
+    background: #F3F3F3;
+    color: #A1A4A9;
+    top:0;
+    right: 0;
+    cursor: pointer;
+}
+
+#_aside .menu-item-2 {
+    cursor: pointer;
+}
+
+#_aside .menu-item-2 .active{
+    color: #00C250;
+    color:var(--one-diy-color-2)
+}
+#_aside .menu-item-2-title {
+    color: #909399;
+    border-bottom: 1px solid #E6E6E6;
+    padding-left: 28px;
+}
+
+#_aside .menu-item-2:hover {
+    color: #00C250;
+    color:var(--one-diy-color-2)
+}
+
+#_aside .menu-item-2 .icon-box {
+    width: 14px;
+    margin-right: 5px;
+}
+
+/*二级菜单 end*/
+
+/*三级菜单 start*/
+#_aside .menu-item-3 {
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+#_aside .menu-item-3:hover {
+    color: #00C250;
+    color:var(--one-diy-color-3)
+}
+
+#_aside .menu-item-3 .icon-box {
+    width: 14px;
+    margin-right: 5px;
+}
+
+#_aside .menu-item-3 .active {
+    color: #00C250;
+    color:var(--one-diy-color-3);
+    background:#fff;
+}
+#_aside .menu-item-3 .active .icon-box::before, #_aside .menu-item-3 .icon-box::before{
+    content: "\2022";
+    margin:5px;
+}
+/*三级菜单 end*/
+
+#_layout_body{
+    background: #f3f3f3;
+    height: calc(100vh - 61px);
+    overflow: auto;
+}
+
+.main-content{
+    margin: 10px;
+}
+
+._tool.el-button--mini{
+	padding:7px;
+}
+._tool.el-button+.el-button {
+    margin-left: 0px!important;
+}
+
+._head_tool.el-divider--horizontal {
+    display: block;
+    height: 1px;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.el-avatar{
+    border: 1px dashed #d9d9d9;
+}
+
+.copy-text{
+    cursor: pointer;
+}
+
+.main-content .tip {
+    padding: 8px 8px;
+    background-color: #00c25117;
+    background-color: var(--one-diy-color-8);
+    border-radius: 4px;
+    border-left: 5px solid #00C250;
+    border-left: 5px solid var(--one-diy-color-0);
+    margin: 10px 0;
+}

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no,email=no,address=no">
+    <title>后台管理登录 - Powered by {:config('one.name')}</title>
+    <link rel="stylesheet" href="__STATIC__/lib/element-ui@2.15.5/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="__STATIC__/css/flex.css">
+    <link rel="stylesheet" href="__STATIC__/css/login.css">
+
+    <script src="__STATIC__/lib/vue@2.6.12/dist/vue.min.js"></script>
+    <script src="__STATIC__/lib/qs@6.9.4/dist/qs.js"></script>
+    <script src="__STATIC__/lib/axios@0.21.0/dist/axios.min.js"></script>
+    <script src="__STATIC__/lib/element-ui@2.15.5/lib/index.js"></script>
+    <script>
+        const _csrf = '';
+        const _token = '{$Request.token}';
+        const _scriptUrl = '/<?php echo config('sys.admin_path')?>'
+    </script>
+    <script src="__STATIC__/js/common.js?v=1.0.0"></script>
+</head>
+
+<body>
+    <div v-cloak id="app">
+        <div v-if="pageShow" class="page-loading">
+            <div class="spinner">
+                <div class="rect1"></div>
+                <div class="rect2"></div>
+                <div class="rect3"></div>
+                <div class="rect4"></div>
+                <div class="rect5"></div>
+            </div>
+        </div>
+        <div class="login">
+            <div class="bg"></div>
+
+            <div class="content">
+                <h3>管理员登录</h3>
+                <el-form ref="ruleForm" :rules="rules" :model="fdata" label-width="80px">
+                    <el-form-item label-width="0" prop="username">
+                        <el-input v-model="fdata.username" placeholder="请输入内容" clearable>
+                            <i slot="prefix" class="el-input__icon el-icon-user-solid"></i>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item label-width="0" prop="password">
+                        <el-input v-model="fdata.password" placeholder="请输入内容" clearable show-password>
+                            <i slot="prefix" class="el-input__icon el-icon-s-opportunity"></i>
+                        </el-input>
+                    </el-form-item>
+                    <div v-if="loginError >= 3" flex="main:left" >
+                        <el-form-item label-width="0" prop="captcha" style="width:220px">
+                            <el-input v-model="fdata.captcha" placeholder="请输入内容" clearable>
+                                <i slot="prefix" class="el-input__icon el-icon-s-check " style="color:#F56C6C"></i>
+                            </el-input>
+                        </el-form-item>
+                        <img :src="captchaSrc" @click="captChange" style="margin-top: 16px;border: 1px solid #dbdbdb;border-left:0px;width:100px" height="44" width="100" id="captchaImg" alt="验证码" />
+                    </div>
+<el-button :loading="loading" @click="submitForm('ruleForm')" type="primary" style="width:100%;margin-top: 16px;background-color: #00c250;
+                    border-color: #00c250;">登录(Enter)
+                    </el-button>
+                </el-form>
+
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    const captcha_src = '{:captcha_src()}'
+    _layout = new Vue({
+        el: '#app',
+        data() {
+            return {
+                isFail: false,
+                pageShow:true,
+                fdata: {
+                    username:'',
+                    password:''
+                },
+                loading:false,
+                loginError: {:$loginError},
+                captchaSrc: captcha_src,
+                rules: {
+                    username: [{
+                        required: true,
+                        message: '请输入用户名',
+                    }, ],
+                    password: [{
+                        required: true,
+                        message: '请输入密码',
+                    }, ],
+                    captcha: [{
+                        required: true,
+                        message: '请输入验证码',
+                    }, ],
+                }
+            }
+        },
+        created() {
+            var _this = this;
+            document.onkeydown = function(e) {   //按下回车提交
+                let key = window.event.keyCode;  
+                //事件中keycode=13为回车事件
+                if (key == 13) {
+                    if (!_this.isFail) {
+                        _this.submitForm('ruleForm');
+                    } else {
+                        _this.isFail = false
+                    }
+                }
+            };
+        },
+        mounted() {
+            this.$nextTick(()=>{
+                this.pageShow = false;
+            });
+        },
+        methods: {
+            captChange(){
+                this.captchaSrc = captcha_src+'#'+randomString()
+            },
+            submitForm(formName) {
+                let _this = this
+                _this.loading = true
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        request({
+                            params: {
+                                s: 'system/publics/index/',
+                            },
+                            data:_this.fdata,
+                            method: 'post'
+                        }).then(e => {
+                            _this.loading = false
+                            if('undefined' == typeof e){
+                                _this.captChange()
+                                _this.loginError++
+                                _this.isFail = true
+                                return
+                            }
+                            if(e.data.code==0){
+                                sessionStorage.removeItem('CURRENTMENU');
+                                window.location.href = e.data.url
+                            }
+                            
+                        }).catch(e => {
+                            _this.loading = false
+                            _this.captChange()
+                        })
+                    } else {
+                        _this.loading = false
+                        _this.captChange()
+                    }
+                });
+            },
+        }
+    })
+</script>
+
+</html>

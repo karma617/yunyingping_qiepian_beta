@@ -1,0 +1,107 @@
+<div v-cloak id="app" class="main-content">
+    <div flex="main:justify" ref="headerMenu" style="margin-bottom: 10px;">
+        <div>
+            <el-button class="button-item" :loading="btnLoading" type="primary" @click="store('ruleForm')" size="small">
+                保存
+            </el-button>
+            <el-button size="small" @click="backpage()">返回</el-button>
+        </div>
+    </div>
+    <el-divider></el-divider>
+    <div class="form-body">
+        <el-tree :data="menuData" :props="{'label':'title'}" ref="menuTree" show-checkbox
+        node-key="id"
+        default-expand-all
+        :expand-on-click-node="false" @check-change="checkChange">
+            <div flex="main:justify" style="width:100%;hight:30px;" class="custom-tree-node"
+                slot-scope="{ node, data }">
+                <div flex="cross:center">{{ node.label }}</div>
+                <div>
+                    <i :class="[{'el-icon-folder':data.children},{'el-icon-paperclip':!data.children}]"></i>
+                </div>
+            </div>
+        </el-tree>
+    </div>
+</div>
+{include file='common@components/one-form'}
+<script>
+    const _formData = {:json_encode((array) $formData, 1)};
+    const _menuData = {:json_encode((array) $menus, 1)};
+    const app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                btnLoading: false,
+                formData: _formData || {},
+                menuData: _menuData || [],
+            }
+        },
+
+        created() {
+        },
+        methods: {
+            backpage() {
+                navigateTo({
+                    s: 'system/user/role',
+                })
+            },
+            checkChange(obj,current,node){
+                //如果为取消
+                // if(current === false){
+                //     //如果当前节点有子集
+                //     if(obj.children){
+                //     //循环子集将他们的选中取消
+                //     obj.children.map(item => {
+                //         this.$refs.menuTree.setChecked(item.id,false);
+                //     })
+                //     }
+                // }else{
+                // //否则(为选中状态)
+                //     //判断父节点id是否为空
+                //     if(obj.pid !== 0){
+                //     //如果不为空则将其选中
+                //         this.$refs.menuTree.setChecked(obj.pid,true);
+                //     }
+                // }
+                this.tableData = this.$refs.menuTree.getCheckedNodes();
+            },
+            store(formName) {
+                let _this = this;
+                // 获取到组件中的form
+                let checkedNodes = this.$refs.menuTree.getCheckedNodes(false, true)
+                let roleMenus = []
+                for(let i=0, len=checkedNodes.length; i<len; i++) {
+                    let roleMenu = checkedNodes[i].id 
+                    roleMenus.push(roleMenu)
+                }
+                _this.formData.auth=roleMenus
+                request({
+                    params: {
+                        s: 'system/user/editRole',
+                    },
+                    method: 'post',
+                    data: _this.formData
+                }).then(e => {
+                    _this.btnLoading = false;
+                    if (e.data.code == 0) {
+                        this.backpage()
+                    } else {
+                        _this.$message.error(e.data.msg);
+                    }
+                })
+            },
+        },
+        mounted() {
+        var _this = this;
+        //状态回显 
+        if(_this.formData.auth){
+            _this.formData.auth.forEach((i,n) => {
+                var node = _this.$refs.menuTree.getNode(i);
+                if(node.isLeaf){
+                    _this.$refs.menuTree.setChecked(node, true);
+                }
+                });
+            }
+        }
+    });
+</script>

@@ -1,0 +1,524 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <el-container>
+        <el-header style="border-bottom: 1px solid #d7dae2;border-radius: 0;height: 38px;" flex="cross:center">
+            <el-upload action="/admin.php/system/annex/upload" multiple :data={album_id:album_id,driver:drive}
+                :show-file-list="false" :accept="accept" :before-upload="handlerBeforeUpload"
+                style="display:inline-table" :on-progress="handlerUploadProgress" :on-success="handlerUploadSuccess">
+                <el-button type="warning" size="mini">上传附件</el-button>
+            </el-upload>
+            <div style="width: 5px;"></div>
+            <el-popconfirm  title="删除不可恢复,是否确认" @confirm="batchDelPic()">
+            <el-button slot="reference" type="info" :disabled="selPic.length == 0" size="mini" >批量删除</el-button>
+        </el-popconfirm>
+            <!-- <div style="width: 5px;"></div>
+            <el-select v-if="albumGroupForm.id>0" size="mini" :disabled="selPic.length == 0" v-model="changeGroupFrom.album_id" clearable placeholder="移动到">
+                <el-option v-for="item in groups" :key="item.album_id" :label="item.album_name"
+                :value="item.album_id">
+            </el-option> -->
+        </el-select>
+     
+        <div style="margin-left: auto;">
+            <el-dropdown @command="handleDriverClick">
+                <span class="el-dropdown-link">
+                  {{drive}}<i class="el-icon-arrow-down el-icon--right"></i>
+                </span>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item v-for="item in drives" :command="item.code">{{item.title}}</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+        </div>
+        </el-header>
+        <el-container v-loading="loading">
+            <el-aside width="120px" height="100%"
+                style="border-right: 1px solid #d7dae2;border-radius: 0;background-color: #545c64;">
+                <el-menu default-active="0" class="el-menu-vertical-demo" @select="handleOpen"
+                    background-color="#545c64" text-color="#fff" active-text-color="#ffd04b" >
+                    <el-menu-item v-for="group in groups" :index="group.album_id">
+                        <div slot="title" flex="main:justify">
+                            <span style="width: 80px;overflow: hidden;margin-right: 5px;" :title="group.album_name">{{`${group.album_name}`}}</span>
+                            <span>
+                                <i v-if="group.album_id == 0" class="el-icon-plus" @click.stop="initAlbum" title="添加分组"></i>
+                                <i v-if="group.album_id == albumGroupForm.id && group.album_id>0" style="font-size:14px;width: auto;margin:0" class="el-icon-edit" @click.stop="dialogFormVisible = true" title="添加分组"></i>
+                                <el-popconfirm v-if="group.album_id == albumGroupForm.id && group.album_id>0"   :title="'是否确认删除分组'" @confirm="delAlbum(group.album_id)" >
+                                    <i slot="reference" @click.stop style="font-size:14px;width: auto;margin:0" class="el-icon-delete"  title="删除分组"></i>
+                                </el-popconfirm>
+                            </span>
+                        </div>
+                    </el-menu-item>
+                </el-menu>
+            </el-aside>
+            <el-main style="padding:0px;">
+                <div style="border-bottom: 1px solid #dcdfe6;height: 30px;line-height: 30px;padding-left: 10px;">
+                    <span style="margin: 0 5px;">{{album_name}}</span>
+                    <el-divider direction="vertical"></el-divider>
+                    <el-link type="warning" :underline="false" @click="dialogFormVisible = true" v-if="album_id != 0">
+                        重命名</el-link>
+                    <el-popconfirm :title="'是否确认删除分组<'+album_name+'>'" @confirm="delAlbum" v-if="album_id != 0">
+                        <el-link type="danger" slot="reference" :underline="false" style="padding-left: 10px;">删除分组
+                        </el-link>
+                    </el-popconfirm>
+
+                </div>
+                <div class="img-box" flex="main:left dir:left wrap:wrap">
+
+                    <div class="image-row" v-for="(pic,kpic) in pics" :key="kpic">
+                        <div class="image-head-div">
+
+                            <span @click="initChangeName(pic,kpic)">改名</span>
+                            <el-divider direction="vertical"></el-divider>
+                            <span @click="initChangeGroupFrom(pic)">换组</span>
+                            <el-divider direction="vertical"></el-divider>
+                            <span :data-clipboard-text="pic.pic_path" class="copy-text" @click="copyText">链接</span>
+                            <el-divider direction="vertical"></el-divider>
+                            <el-popconfirm title="删除不可恢复,是否确认" @confirm="delPic(pic)">
+                                <span slot="reference">删除</span>
+                            </el-popconfirm>
+                        </div>
+                        <div class="image-main">
+                            <div class="diy-edge" @click="setSelPic(pic.pic_id,selPic.includes(pic.pic_id)?!1:!0)">
+                                <el-tag size="mini" type="info" v-if="selPic.findIndex(e=>e==pic.pic_id)+1 == 0" ><i class="el-icon-plus"></i></el-tag>
+                                <el-tag size="mini" v-else>{{selPic.findIndex(e=>e==pic.pic_id)+1}}</el-tag>
+                            </div>
+                            <el-image :title="pic.pic_name" style="width:148px;height:148px" :src="pic.pic_path"
+                                :fit="'scale-down'" :preview-src-list="pic.pic_path.split(',')">
+                                <div slot="error" class="image-slot" style="width:148px;height:148px;" flex="main:center cross:center">
+                                    <img :src="`/static/img/file_ico/${pic.ext}.png`">
+                                </div>
+                            </el-image>
+                            <div @click="initChangeName(pic,kpic)" class="image-title" flex="main:justify"
+                                :title="pic.pic_name">
+                                <div>{{pic.pic_name}}</div>
+                                <div>{{pic.drive || '未知'}}</div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                <el-pagination background layout="total, sizes, prev, pager, next" @size-change="handleSizeChange"
+                @current-change="handleCurrentChange" :page-sizes="[15, 30, 60, 90,150,300]" :total="total">
+                </el-pagination>
+            </el-main>
+        </el-container>
+    </el-container>
+    <el-dialog :title="dialogFormTitle" :visible.sync="dialogFormVisible" width="30%">
+        <el-form :model="albumGroupForm">
+            <el-form-item label="分组名称" :label-width="formLabelWidth">
+                <el-input v-model="albumGroupForm.album_name" autocomplete="off"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogFormVisible = false">取 消</el-button>
+            <el-button type="primary" @click="submitAlbum">确 定</el-button>
+        </div>
+    </el-dialog>
+
+    <el-dialog title="" :visible.sync="dialogChangeGroupFrom" width="30%">
+        <el-form :model="changeGroupFrom">
+            <el-form-item label="分组名称" :label-width="formLabelWidth">
+                <el-select v-model="changeGroupFrom.album_id" placeholder="请选择">
+                    <el-option v-for="item in groups" :key="item.album_id" :label="item.album_name"
+                        :value="item.album_id">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogChangeGroupFrom = false">取 消</el-button>
+            <el-button type="primary" @click="submitChangeGroupFrom">确 定</el-button>
+        </div>
+    </el-dialog>
+</div>
+{include file='common@components/one-tabs'}
+<script>
+    const tabData = {:json_encode($tabData)};
+    const drives = {:json_encode($drives)};
+    console.log(drives);
+    new Vue({
+        el: "#app",
+        props: {
+            visible: {
+                type: Boolean,
+                default: false,
+            },
+            accept: {
+                type: String,
+                default: "image/gif,image/jpeg,image/jpg,image/png,image/svg"
+            }
+        },
+        data() {
+            return {
+                loading:!0,
+                drives:drives,
+                drive:"Local",
+                groups: [],
+                pics: [],
+                selPic:[],
+                total: 0,
+                album_id: 0,
+                album_name: '所有附件',
+                dialogFormTitle: '编辑分组',
+                page: 1,
+                limit:15,
+                dialogFormVisible: false,
+                albumGroupForm: {
+                    id: '',
+                    album_name: '',
+                },
+                formLabelWidth: '70px',
+                dialogChangeName: false,
+                changeNameFrom: {
+                    pic_id: '',
+                    pic_name: '',
+                    album_id: ''
+                },
+                realDel: false,
+                changeGroupFrom: {
+                    pic_id: '',
+                    album_id: '',
+                    album_id_old: ''
+                },
+                dialogChangeGroupFrom: false
+            };
+        },
+        created() {
+            this.getAlbumTypes();
+            this.getPics();
+        },
+
+        methods: {
+            //选择驱动
+            handleDriverClick(item){
+                this.drive = item
+            },
+            // 切换标签
+            handleChange(item) {
+                if(item.name == 'help'){
+                    this.helpShow = true
+                    return
+                }
+                window.location.href = item.url
+            },
+            //选择图片
+            setSelPic(val,env){
+                if(false === env){
+                    let _index = this.selPic.findIndex(v=>v==val)
+                    delete this.selPic.splice(_index,1)
+
+                }else{
+                   !this.selPic.includes(val) && this.selPic.push(val)
+                }
+            },
+            //图片上传成功
+            handlerUploadSuccess(err, file, fileList) {
+                if(err.code == 1){
+                    return this.$alert(err.msg);
+                }
+                this.page = 1;
+                this.getPics()
+            },
+            //上传进度
+            handlerUploadProgress(event, file, fileList) {
+                console.log('handlerUploadProgress===========', Math.floor(event.percent))
+
+            },
+            //上传之前
+            handlerBeforeUpload(file) {
+                //简单过滤文件
+                if (!(this.accept.split(',')).includes(file.type)) {
+                    // return false;
+                }
+            },
+            handleOpen(key, keyPath) {
+                this.album_id = key;
+                this.page = 1;
+                this.groups.forEach(element => {
+                    if (element.album_id == this.album_id) {
+                        this.album_name = element.album_name;
+                        this.albumGroupForm.id = element.album_id;
+                        this.albumGroupForm.album_name = element.album_name;
+                        this.dialogFormTitle = '编辑分组';
+                    }
+                });
+                this.getPics();
+            },
+            getAlbumTypes() {
+                let _this = this;
+                _this.loading = !0
+                request({
+                    url: 'system/album/getalbumlist',
+                }).then((e) => {
+                    _this.loading = !1
+                    _this.page = 1
+                    _this.group = [{
+                        'album_id': 0,
+                        'album_name': '所有附件',
+                        'num':0
+                    }]
+                    console.log(e.data.data)
+                    _this.groups = _this.group.concat(e.data.data)
+                })
+            },
+            getPics() {
+                let _this = this;
+                _this.loading = !0
+                request({
+                    url: 'system/album/index',
+                    params: {
+                        page: _this.page,
+                        limit: _this.limit,
+                        album_id: _this.album_id
+                    }
+                }).then((e) => {
+                    _this.loading = !1
+                    _this.pics = e.data.data.list;
+                    _this.selPic=[]
+                    _this.total = e.data.data.count
+                })
+            },
+            submitAlbum() {
+                let _this = this;
+                _this.loading = !0;
+                if (_this.albumGroupForm.id == 0) {
+                    request({
+                        url: 'system/album/addAlbum',
+                        params: {
+                            album_name: _this.albumGroupForm.album_name
+                        }
+                    }).then((e) => {
+                        _this.getAlbumTypes();
+                        _this.dialogFormVisible = false;
+                    })
+                } else {
+                    request({
+                        url: 'system/album/editAlbum',
+                        params: {
+                            album_id: _this.albumGroupForm.id,
+                            album_name: _this.albumGroupForm.album_name
+                        }
+                    }).then((e) => {
+                        _this.getAlbumTypes();
+                        _this.album_name = _this.albumGroupForm.album_name;
+                        _this.dialogFormVisible = false;
+                    })
+                }
+            },
+            initAlbum() {
+                this.dialogFormTitle = '新增分组';
+                this.albumGroupForm.id = 0;
+                this.albumGroupForm.album_name = '';
+                this.dialogFormVisible = true;
+            },
+            delAlbum(id) {
+                let _this = this;
+                let _id = _this.albumGroupForm.id || id;
+                _this.loading = !0;
+                request({
+                    url: 'system/album/deleteAlbum',
+                    params: {
+                        album_id: _id
+                    }
+                }).then((e) => {
+                    if('undefined' != typeof e){
+                        _this.getAlbumTypes();
+                    }
+                })
+            },
+            //批量删除
+            batchDelPic(){
+                console.log('batchDelPic=========')
+                let _this = this;
+                let _ids = _this.selPic || [];
+                _this.loading = !0;
+                request({
+                    url: 'system/album/deleteFile',
+                    params: {
+                        pic_id:  _ids,
+                        album_id:_this.albumGroupForm.id
+                    }
+                }).then((e) => {
+                    if('undefined' != typeof e){
+                        _this.getPics()
+                    }
+                })
+            },
+            //修改名称
+            initChangeName(item,index) {
+                let _this = this
+                this.$prompt('', '修改名称', {
+                    showClose: false,
+                    closeOnClickModal: false,
+                    inputValue:item.pic_name || '',
+                    inputPattern: /^\S+[A-Za-z0-9_\u4e00-\u9fa5]+$/,
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                }).then((e) => {
+                    _this.loading = true
+                
+                    request({
+                        url: 'system/album/modifyPicName',
+                        data: {'pic_id':item.pic_id,'album_id':item.album_id||0,'pic_name':e.value},
+                        method: 'post'
+                    }).then(res => {
+                        _this.loading = false
+                        if(res.data.code == 0){
+                          
+                            _this.pics[index].pic_name = e.value
+                            
+                        }
+                    })
+                }).catch((res) => {
+                    _this.loading = false
+                })
+            },
+            
+            delPic(item) {
+                console.log('delPic=========')
+                let _this = this;
+                _this.loading = !0;
+                request({
+                    url: 'system/album/deleteFile',
+                    params: {
+                        album_id: item.album_id,
+                        pic_id: item.pic_id,
+                        real_del: this.realDel
+                    }
+                }).then((e) => {
+                    _this.loading = !1;
+                    e.data.code == 0 && _this.getPics();
+                })
+            },
+
+
+            initChangeGroupFrom(item) {
+                this.changeGroupFrom.pic_id = item.pic_id;
+                this.changeGroupFrom.album_id = item.album_id;
+                this.changeGroupFrom.album_id_old = item.album_id;
+                this.dialogChangeGroupFrom = true;
+            },
+            submitChangeGroupFrom() {
+                let _this = this;
+                _this.loading = !0;
+                request({
+                    url: 'system/album/changeGroup',
+                    params: {
+                        album_id: _this.changeGroupFrom.album_id,
+                        album_id_old: _this.changeGroupFrom.album_id_old,
+                        pic_id: _this.changeGroupFrom.pic_id
+                    }
+                }).then((e) => {
+                    _this.getPics();
+                    _this.dialogChangeGroupFrom = false;
+                })
+            },
+            handleSizeChange(val){
+                this.limit = val
+                this.getPics()
+            },
+            handleCurrentChange(val){
+                this.page = val
+                this.getPics()
+            },
+            checkImgExists(pic){
+                return './static/img/file_ico/'+pic.ext+'.png'
+            } 
+        },
+    });
+</script>
+
+<style scoped>
+    .el-divider--vertical {
+        margin: 0px !important;
+    }
+
+    .img-box {
+        margin: 10px;
+
+    }
+
+    .img-box:after {
+        content: "";
+        flex: auto;
+
+    }
+
+    .image-row {
+        border: 1px solid #d7dae2;
+        width: 150px;
+        height: 200px;
+        margin: 10px;
+    }
+
+    .image-row:hover {
+        border: 1px solid #00c250;
+        border: 1px solid var(--one-diy-color-0);
+        width: 150px;
+    }
+
+    .image-head-div {
+        font-size: smaller;
+        text-align: center;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    .image-head-div span {
+        color: #e6a23c;
+    }
+
+    .image-main {
+        width: 148px;
+        height: 148px;
+    }
+
+    .el-menu {
+     border-right: none!important;
+    }
+
+    .image-title {
+        cursor: pointer;
+        position: relative;
+        width: 148px;
+        overflow: hidden;
+        line-height: 30px;
+        top: 0px;
+        background-color: rgb(0, 0, 0, 0.6);
+        overflow: hidden;
+        height: 30px;
+    }
+
+    .image-title div:last-child {
+        color: #fff;
+        position: absolute;
+        right: 0px;
+        padding: 0 5px;
+        line-height: 30px;
+        background-color: #000;
+    }
+
+    .el-image {
+
+        display: flex;
+
+    }
+    .image-main{
+        position: relative;
+    }
+    .diy-edge{
+        position: absolute;
+        top:5px;
+        left:5px;
+        z-index:1999;
+        cursor: pointer;
+        text-align: center;
+    }
+    .diy-edge .el-tag--mini {
+        min-width: 24px;
+        min-height: 24px;
+        line-height: 20px;
+    }
+    .el-menu-item {
+        padding:0 5px!important;
+    }
+</style>

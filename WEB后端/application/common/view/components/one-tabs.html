@@ -1,0 +1,18 @@
+<template id="one-tabs">
+    <div :class="">
+        <el-tabs v-model="option.current" :tab-position="option.position" :type="option.type" @tab-click="changeTabs">
+            <el-tab-pane :name="column.name"  :disabled="column.disabled" v-for="(column,index) in option.column"
+                :key="index">
+                <span slot="label" >
+                    <i :class="column.icon" v-if="column.icon"></i>{{column.label}}
+                    <i v-if="column.close" class="el-icon-close"  @click.stop="handleClose(column)"></i>
+                </span>
+            </el-tab-pane>
+        </el-tabs>
+
+    </div>
+</template>
+
+<script>
+   "use strict";Vue.component("one-tabs",{template:"#one-tabs",props:{option:{type:Object,required:!0,default:function(){return{}}}},data:function(){},watch:{},computed:{active:function(){return this.option.current}},methods:{changeTabs:function(t){var e=this.option.column[t.index];this.$emit("change",e)},handleClose:function(t){this.$emit("close",t)}},created:function(){}});
+</script>

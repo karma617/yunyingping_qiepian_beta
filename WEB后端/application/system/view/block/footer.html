@@ -1,0 +1,135 @@
+</body>
+{include file='common@components/one-theme'}
+<script>
+    _layout = new Vue({
+        el: '#_layout',
+        created() {
+            // setInterval(() => {
+            //     this.$request({
+            //         params: {
+            //             r: 'keep-alive/index',
+            //         },
+            //     }).then(e => {}).catch(e => {});
+            // }, 1000 * 60 * 5);
+        },
+    });
+    _header = new Vue({
+        el: '#_header',
+        data(){
+            return{
+                theme:localStorage.getItem('one-theme') || '#00C250', //默认主题色
+                pageShow:true,
+                oneBreadcrumb:_oneBreadcrumb
+            }
+        },
+        created() {
+
+        },
+        mounted() {
+            this.$nextTick(()=>{
+                this.pageShow = false;
+            });
+        },
+        computed:{
+            asideColl: (state)=> store.state.menu.asideColl
+        },
+        methods:{
+            async _asideToggle(){
+                let _asideColl = !await store.state.menu.asideColl 
+                // store 赋值
+                await store.commit('SET_MENU',{asideColl:_asideColl})
+            },
+            clearCache(){
+                request({
+                    params: {
+                        s: 'system/index/clear',
+                    },
+                    method: 'post'
+                }).then(e => {
+                    this.$notify.info({
+                        title: '消息',
+                        position: 'bottom-right',
+                        message: '缓存清理完成,可能需要您重载页面'
+                    });
+                }).catch(e => {
+                })
+                
+            }
+        }
+    });
+    _aside = new Vue({
+        el: '#_aside',
+        data() {
+            return {
+                mall: {
+                    name: 'abcd1234'
+                },
+                breadCrumbArr : _oneCurMenuArr,
+                leftMenuLoading: false,
+                leftMenus: _oneMenus ,
+                defaultRoute: null,
+                subMenu:[],
+                currentRoute: "",
+                isShowMenu: true,
+            };
+        },
+        created(){
+        },
+        computed:{
+            asideColl: state => store.state.menu.asideColl,
+        },
+        mounted: function () {
+            this.getMenu()
+        },
+        methods: {
+            // 点击一级菜单
+            menuClick1(menu) {
+                if (!menu.children) {
+                    this.breadCrumbArr = [menu.id]
+                    this.subMenu = null
+                    this.openUrl(menu);
+                } else {
+                    this.isShowMenu = true;
+                    this.breadCrumbArr[0] = menu.id
+                    this.getMenu()
+                }
+            },
+            // 点击二级菜单
+            menuClick2(menu,idx) {
+                if (!menu.children) {
+                    this.openUrl(menu);
+                } else {
+                    //子集折叠
+                    this.$set(this.subMenu[idx],'expand',!menu.expand)
+                }
+            },
+            // 点击三级菜单
+            menuClick3(menu) {
+                this.openUrl(menu);
+            },
+            getMenu(){
+                $sub_menu = []
+                $_menu = this.leftMenus
+                $_level = this.breadCrumbArr.length
+                //第一级index
+                $_level_1_index = array_column($_menu,'id').findIndex((v)=>v==this.breadCrumbArr[0]);
+                this.subMenu = $_level_1_index != -1 && $_menu[$_level_1_index].children;
+                //第二级index展开子集
+                if($_level >= 3){
+                    $_level_2_index = array_column(this.subMenu,'id').findIndex((v)=>v==this.breadCrumbArr[1]);
+                    if($_level_2_index != -1 && this.subMenu[$_level_2_index].children){
+                        this.$set(this.subMenu[$_level_2_index],'expand',true)
+                    }
+                }
+            },
+
+            openUrl(menu) {
+                if (menu) {
+                    let url = `${_scriptUrl}/${menu.url}`
+                    url += menu.param ? '?' + menu.param : ''
+                    window.location.href = url
+                }
+            }
+        }
+    });
+</script>

@@ -1,0 +1,215 @@
+<template id="one-img-cell">
+    <div>
+        <div class="img-cell" flex="main:left">
+            <draggable
+                v-model="orgData"
+                @start="drag=true"
+                @end="drag=false"
+                class="draggable-box"
+            >
+                <div class="img-item" v-for="(item,index) in orgData">
+                    <div :style="imgCellItemStyle" style="overflow: hidden">
+                        <el-image
+                            :src="item.pic_path"
+                            :preview-src-list="showImgUrl"
+                            ref="preview"
+                        ></el-image>
+                        <!--<img :src="item.pic_path" />-->
+                        <div class="tool" flex="main:justify">
+                            <div
+                                class="tool-item"
+                                @click="handlerPreview(item.pic_path, index)"
+                            >
+                                查
+                            </div>
+                            <div
+                                v-if="(max > 1) || delShow"
+                                class="tool-item"
+                                @click="handlerDel(item,index)"
+                            >
+                                删
+                            </div>
+                            <div
+                                v-if="max==1"
+                                class="tool-item"
+                                @click="visible=!visible"
+                            >
+                                换
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </draggable>
+            <div
+                v-if="max==0 || orgData.length < max"
+                :style="imgCellItemStyle"
+                style="border: 1px solid #eee; cursor: pointer"
+                class="img-item"
+                flex="main:center cross:center"
+                @click="visible=!visible"
+            >
+                <i
+                    class="el-icon-plus"
+                    style="font-size: 40px; color: var(--one-diy-color-1)"
+                ></i>
+            </div>
+        </div>
+        <one-pop-album
+            ref="pop"
+            :max="max"
+            v-model="value"
+            :visible.sync="visible"
+            @close="visible=false"
+            @success="handlerSuccess"
+        ></one-pop-album>
+    </div>
+</template>
+{include file='common@components/one-pop-album'}
+<script src="__STATIC__/lib/vue-draggable/Sortable.min.js"></script>
+<script src="__STATIC__/lib/vue-draggable/vuedraggable.umd.min.js"></script>
+<script>
+    Vue.component('one-img-cell', {
+        template: '#one-img-cell',
+        props: {
+            //绑定值
+            value: {
+                type: Array,
+                default: () => [],
+            },
+            //弹层显示
+            visible: {
+                type: Boolean,
+                default: false,
+            },
+            //最大数量 0 不限制
+            max: {
+                type: Number,
+                default: 0,
+            },
+            //样式
+            imgCellItemStyle: {
+                type: Object,
+                default: function () {
+                    return {
+                        width: '50px',
+                        height: '50px',
+                    };
+                },
+            },
+            //是否显示删除
+            delShow: {
+                type: Boolean,
+                default: false,
+            },
+        },
+        data() {
+            return {
+                visible: false,
+                orgData: [],
+                oldOrgData: [],
+                showImgUrl: [],
+            };
+        },
+        computed: {},
+        watch: {
+            value: {
+                deep: true,
+                immediate: true,
+                handler: function (newV, oldV) {
+                    if ('string' === typeof this.value) {
+                        if (this.value != '') {
+                            this.orgData = [{ pic_path: this.value }];
+                            this.oldOrgData = this.orgData;
+                        }
+                    } else {
+                        this.orgData = this.value.map((v, i, a) => {
+                            return { pic_path: v };
+                        });
+                        this.oldOrgData = this.orgData;
+                    }
+                },
+            },
+        },
+
+        created() {},
+        mounted() {},
+        methods: {
+            //选择
+            handlerSuccess(e) {
+                // 找到在chooseList(选中)中的索引，
+                this.oldOrgData.forEach((item, idx) => {
+                    let i = e.findIndex((v) => v.pic_path === item.pic_path);
+                    if (i !== -1) {
+                        e.splice(i, 1);
+                    }
+                });
+                
+                // 判断当前图片是否已选中。判断图片是否超出
+                if (this.max == 1) {
+                    this.orgData.pic_path = e;
+                } else {
+                    if (this.max - e.length <= 0) {
+                        this.orgData = [];
+                    }
+                    e = this.orgData.concat(e);
+                }
+                if (this.max > 0) {
+                    e = e.slice(0, this.max);
+                }
+                this.orgData = e;
+                this.$emit('input', array_column(this.orgData, 'pic_path'));
+            },
+            //删除
+            handlerDel(item, index) {
+                this.orgData.splice(index, 1);
+                this.$emit('input', array_column(this.orgData, 'pic_path'));
+            },
+            //预览
+            handlerPreview(e, index) {
+                this.showImgUrl = [e];
+                this.$nextTick(() => {
+                    this.$refs.preview[index].clickHandler();
+                });
+            },
+        },
+    });
+</script>
+<style scoped>
+    .img-item {
+        position: relative;
+        margin: 5px;
+    }
+    .img-item img {
+        object-fit: scale-down;
+        width: 100%;
+    }
+
+    .img-item .tool {
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        bottom: 0px;
+        position: absolute;
+        width: 100%;
+        height: 24px;
+        font-size: 12px;
+        line-height: 24px;
+        cursor: pointer;
+    }
+
+    .img-item .tool .tool-item {
+        width: 50%;
+        padding: 0 5px;
+        text-align: center;
+    }
+    .draggable-box {
+        display: flex !important;
+        flex-direction: row;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    .el-image {
+        display: flex;
+        align-items: center;
+        align-content: center;
+    }
+</style>

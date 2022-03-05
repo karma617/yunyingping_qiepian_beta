@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<root>
+	<item id="code"><![CDATA[alipay_app]]></item>
+	<item id="title"><![CDATA[支付宝APP支付]]></item>
+	<item id="intro"><![CDATA[外部商户APP唤起快捷SDK创建订单并支付]]></item>
+	<item id="status"><![CDATA[0]]></item>
+	<item id="applies"><![CDATA[pc,wap]]></item>
+	<item id="config">
+		<item id="app_id">
+			<item id="label"><![CDATA[应用ID]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[required]]></item>
+			<item id="tip"><![CDATA[支付宝收款账户]]></item>
+		</item>
+		<item id="aes">
+			<item id="label"><![CDATA[AES密钥]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="tip"><![CDATA[]]></item>
+			<item id="sensitive"><![CDATA[yes]]></item>
+		</item>
+		<item id="private_key">
+			<item id="label"><![CDATA[商户私钥]]></item>
+			<item id="type"><![CDATA[textarea]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="tip"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[required]]></item>
+			<item id="sensitive"><![CDATA[yes]]></item>
+		</item>
+		<item id="public_key">
+			<item id="label"><![CDATA[支付宝公钥]]></item>
+			<item id="type"><![CDATA[textarea]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="tip"><![CDATA[支付宝公钥,<a href="https://openhome.alipay.com/platform/keyManage.htm" target="_blank" rel="noreferrer">点此查看</a>]]></item>
+			<item id="sensitive"><![CDATA[yes]]></item>
+		</item>
+		<item id="payment_callback">
+			<item id="label"><![CDATA[支付回调方法]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[required]]></item>
+			<item id="tip"><![CDATA[支付成功后需要执行的业务代码，格式：模块/控制器/方法]]></item>
+		</item>
+		<item id="refund_callback">
+			<item id="label"><![CDATA[退款回调方法]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="verify"><![CDATA[required]]></item>
+			<item id="tips"><![CDATA[退款成功后需要执行的业务代码，格式：模块/控制器/方法]]></item>
+		</item>
+	</item>
+</root>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<root>
+	<item id="code"><![CDATA[Qiniu]]></item>
+	<item id="title"><![CDATA[七牛云]]></item>
+	<item id="intro"><![CDATA[安全稳定、便捷易用、低成本的海量云端存储服务]]></item>
+	<item id="status"><![CDATA[0]]></item>
+	<item id="applies"><![CDATA[pc,wap]]></item>
+	<item id="config">
+		<item id="ak">
+			<item id="label"><![CDATA[访问密钥]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="rules">
+				<item id="required"><![CDATA[TRUE]]></item>
+				<item id="message"><![CDATA[不可为空]]></item>
+			</item>
+			<item id="tip"><![CDATA[AccessKey<a target="_blank" href="https://portal.qiniu.com/user/key">点击查看</a>]]></item>
+		</item>
+		<item id="sk">
+			<item id="label"><![CDATA[加密密钥]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="rules">
+				<item id="required"><![CDATA[TRUE]]></item>
+				<item id="message"><![CDATA[不可为空]]></item>
+			</item>
+			<item id="tip"><![CDATA[SecretKey<a target="_blank" href="https://portal.qiniu.com/user/key">点击查看</a>]]></item>
+		</item>
+		<item id="bucket">
+			<item id="label"><![CDATA[空间名称]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="tip"><![CDATA[空间名称Bucket]]></item>
+			<item id="rules">
+				<item id="required"><![CDATA[TRUE]]></item>
+				<item id="message"><![CDATA[不可为空]]></item>
+			</item>
+		</item>
+		<item id="domain">
+			<item id="label"><![CDATA[空间域名]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="rules">
+				<item id="required"><![CDATA[TRUE]]></item>
+				<item id="message"><![CDATA[不可为空]]></item>
+			</item>
+			<item id="tip"><![CDATA[绑定的自定义域名]]></item>
+		</item>
+		<item id="url">
+			<item id="label"><![CDATA[上传域名]]></item>
+			<item id="type"><![CDATA[input]]></item>
+			<item id="value"><![CDATA[]]></item>
+			<item id="rules">
+				<item id="required"><![CDATA[TRUE]]></item>
+				<item id="message"><![CDATA[不可为空]]></item>
+			</item>
+			<item id="tip"><![CDATA[每个分区对应不同的上传域名<a target="_blank" href="https://developer.qiniu.com/kodo/1671/region-endpoint-fq">点击查看</a>]]></item>
+		</item>
+	</item>
+</root>

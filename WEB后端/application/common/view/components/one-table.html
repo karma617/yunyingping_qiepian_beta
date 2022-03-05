@@ -1,0 +1,67 @@
+<template id="one-table">
+    <div :class="" v-loading="loading" element-loading-text="拼命加载中">
+        <!-- 表格功能列 -->
+        <header-menu flex="main:justify" ref="headerMenu" v-if="option.header" style="margin-bottom: 10px;">
+            <template slot="menuLeft">
+                <slot name="menuLeft"></slot>
+            </template>
+            <template slot="menuRight">
+                <slot name="menuRight"></slot>
+                <el-button v-if="option.header.refresh" icon="el-icon-refresh-right" circle :size="option.size || 'mini'" @click="handleRefresh"></el-button>
+            </template>
+        </header-menu>
+
+        <slot name="header"></slot>
+
+        <el-table  :data.sync="data" ref="one-table" :option.sync="option" :row-class-name="rowClassName" border :stripe="option.hasOwnProperty('stripe') ? option.stripe : true" :header-cell-style="headClass">
+            <!-- 多选 -->
+            <el-table-column v-if="option.selection" type="selection" align="center" ></el-table-column>
+            <!-- 序号 -->
+            <el-table-column v-if="option.index" type="index" label="序号" align="center" width="50"></el-table-column>
+            <!--按钮操作组-->
+            <el-table-column v-if="option.operates" ref="fixedColumn" label="操作" align="center" :width="option.operates.width"
+                :fixed="option.operates.fixed">
+                <template slot-scope="scope" >
+                    <!-- 插槽自定义列  -->
+                    <slot name="operates" :row="scope.row" :index="scope.$index" ></slot>
+                </template>
+            </el-table-column>
+            <!--end-->
+            <!-- 自定义 -->
+            <template v-for="(item, index) in option.column" v-if="!item.hide">
+                <el-table-column :key="index" :prop="item.prop" :label="item.label" :width="item.width" :header-align="item.headerAlign || 'center'" :align="item.align || 'center'">
+                    <template slot-scope="scope">
+                        <!-- 插槽自定义列  -->
+                        <slot v-if="item.slot" :name="item.prop" :row="scope.row" :index="scope.$index"></slot>
+                        <!-- 常规列  -->
+                        <span v-else>{{scope.row[item.prop]}}</span>
+                    </template>
+      
+                </el-table-column>
+            </template>
+            <template slot="empty">
+                <slot name="empty"></slot>
+            </template>
+        </el-table>
+        <!-- 分页 -->
+        <div flex="dir:right" style="margin: 10px 0;">
+            <el-pagination ref="tablePage" background v-if="option.page" 
+                :size="option.size || 'mini'" 
+                @current-change="handleCurrentChange" 
+                @size-change="handleSizeChange"  
+                :current-page="option.page.currentPage || 1" 
+                :page-sizes="option.page.pageSizes || [15, 50, 100, 300, 500]" 
+                :page-size="option.page.pageSize  || 15" 
+                :total="option.page.total  || 0" 
+                :layout="option.page.layout  || 'total, sizes, prev, pager, next'"
+            >
+            </el-pagination>
+        </div>
+
+
+    </div>
+</template>
+
+<script>
+    "use strict";Vue.component("one-table",{template:"#one-table",props:{loading:{type:Boolean,default:function(){return!1}},data:{type:Array,default:function(){return[]}},option:{type:Array,default:function(){return[]}}},watch:{},methods:{headClass:function(){return"background:var(--one-diy-color-8);"},handleCurrentChange:function(e){this.$emit("current-change",e)},handleSizeChange:function(e){this.$emit("size-change",e)},handleRefresh:function(){this.$emit("handleRefresh",val)},rowClassName:function({row,rowIndex}){let val; this.$emit("row-class-name",{row,rowIndex},e=>{val=e});return val}}});
+</script>

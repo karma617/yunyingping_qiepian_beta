@@ -1,0 +1,453 @@
+<template id="one-pop-album">
+    <el-dialog
+        title="图片管理"
+        :visible.sync="visible"
+        :width="'840px'"
+        @open="handlerOpen"
+        @close="handlerClose"
+    >
+        <template slot="title">
+            <el-button type="success" size="mini" @click="success">
+                确认选择
+            </el-button>
+            <el-divider direction="vertical"></el-divider>
+            <el-upload
+                :action="_scriptUrl + '/system/annex/upload'"
+                :multiple="true"
+                :data="{ album_id: select_group_index, driver: 'Local' }"
+                :show-file-list="false"
+                :accept="accept"
+                :before-upload="handlerBeforeUpload"
+                style="display:inline-table"
+                :on-progress="handlerUploadProgress"
+                :on-success="handlerUploadSuccess"
+            >
+                <el-button type="warning" size="mini">上传图片</el-button>
+            </el-upload>
+            <el-button type="info" size="mini" @click="addGroup">
+                添加分组
+            </el-button>
+        </template>
+        <div id="album" v-loading="loading">
+            <div flex="main left" class="album-box">
+                <div flex-box="0" class="album-list-box">
+                    <ul class="album-list">
+                        <li
+                            :class="
+                                `${
+                                    item.album_id == select_group_index
+                                        ? 'active'
+                                        : ''
+                                }`
+                            "
+                            v-for="(item, index) in group"
+                            @click="handlerSelectGroup(item)"
+                        >
+                            <span>{{ item.album_name }}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div flex-box="1" class="album-content">
+                    <ul class="album-img">
+                        <li v-for="(item, index) in imageList">
+                            <div @click="choose(item, index)">
+                                <img :src="item.pic_path" alt="" />
+                                <div
+                                    class="image-box-active ns-border-color"
+                                    :style="{
+                                        display: item.ischeck ? 'block' : 'none'
+                                    }"
+                                >
+                                    <i class="active-index">
+                                        {{ item.checkOrder }}
+                                    </i>
+                                </div>
+                            </div>
+                            <span>{{ item.pic_name }}</span>
+                        </li>
+                    </ul>
+                    <div id="paged" class="page">
+                        <el-pagination
+                            @current-change="pageCurrentChange"
+                            background
+                            layout="prev, pager, next"
+                            :total="count"
+                        ></el-pagination>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </el-dialog>
+</template>
+<script>
+Vue.component('one-pop-album', {
+    template: '#one-pop-album',
+    props: {
+        visible: {
+            type: Boolean,
+            default: false
+        },
+        accept: {
+            type: String,
+            default: 'image/gif,image/jpeg,image/jpg,image/png,image/svg'
+        },
+        max: {
+            type: [String, Number],
+            default: '0' | 0
+        }
+    },
+    data() {
+        return {
+            group: [
+                {
+                    album_id: 0,
+                    album_name: '所有图片'
+                }
+            ],
+            page: null,
+            select_group_index: 0,
+            imageList: [],
+            chooseList: [],
+            count: 0,
+            loading: false
+        };
+    },
+    computed: {
+        listenChange() {
+            const { page, select_group_index } = this;
+            return {
+                page,
+                select_group_index
+            };
+        }
+    },
+    watch: {
+        listenChange: {
+            deep: true,
+            // immediate:true,
+            handler: function(newV, oldV) {
+                console.log('listenChange================');
+                this.getData();
+            }
+        }
+    },
+
+    // render(h) {
+
+    // },
+    created() {
+        //this.getAlbumList();
+    },
+    mounted() {},
+    methods: {
+        //上传之前
+        handlerBeforeUpload(file) {
+            //简单过滤文件
+            if (!this.accept.split(',').includes(file.type)) {
+                return false;
+            }
+        },
+        //打开
+        handlerOpen() {
+            this.page = null;
+            this.getAlbumList();
+        },
+        handlerClose() {
+            this.chooseList = [];
+            this.$emit('close', false);
+        },
+        //选择
+        success() {
+            (this.visible = false), this.$emit('close', false);
+            this.$emit('success', cloneDeep(this.chooseList));
+            this.chooseList = [];
+            this.imageList.map(v => {
+                v.ischeck = !1;
+                v.checkOrder = null;
+                return v;
+            });
+        },
+        //改变分组
+        handlerSelectGroup(item) {
+            this.chooseList = [];
+            this.select_group_index = item.album_id;
+            this.page = 1;
+        },
+        //页码
+        pageCurrentChange(e) {
+            this.page = e;
+        },
+        //添加分组
+        addGroup() {
+            let _this = this;
+            this.$prompt('', '添加分组', {
+                showClose: false,
+                closeOnClickModal: false,
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                inputPattern: /^[A-Za-z0-9_\u4e00-\u9fa5]+$/,
+                inputErrorMessage: '不允许特殊字符'
+            })
+                .then(e => {
+                    _this.loading = !0;
+
+                    request({
+                        url: 'system/album/addAlbum',
+                        data: {
+                            album_name: e.value
+                        },
+                        method: 'post'
+                    }).then(res => {
+                        _this.loading = !1;
+                        _this.group.splice(1, 0, {
+                            album_id: res.data.data,
+                            album_name: e.value
+                        });
+                    });
+                })
+                .catch(res => {
+                    _this.loading = !1;
+                });
+        },
+        //获取列表
+        getData() {
+            let _this = this;
+            _this.loading = !0;
+            request({
+                url: 'system/album/index',
+                params: {
+                    page: _this.page,
+                    album_id: _this.select_group_index
+                }
+            }).then(e => {
+                _this.loading = !1;
+                _this.imageList = e.data.data.list.map(v => {
+                    v.ischeck = !1;
+                    v.checkOrder = null;
+                    return v;
+                });
+                _this.count = e.data.data.count;
+            });
+        },
+        //获取分组
+        getAlbumList() {
+            let _this = this;
+            _this.loading = !0;
+            request({
+                url: 'system/album/getalbumlist'
+            }).then(e => {
+                _this.loading = !1;
+                _this.page = 1;
+                _this.group = [
+                    {
+                        album_id: 0,
+                        album_name: '所有图片'
+                    }
+                ];
+                _this.group = _this.group.concat(e.data.data);
+            });
+        },
+        // 点击选中图片
+        choose(item, index) {
+            // 选中
+            if (!item.ischeck) {
+                if (this.max == 1) {
+                    this.imageList.forEach((v, k) => {
+                        this.imageList[k].ischeck = 0;
+                    });
+                    this.chooseList = [];
+                }
+                if (this.max == 0 || this.chooseList.length < this.max) {
+                    // 加入选中
+                    this.chooseList.push({
+                        pic_id: item.pic_id,
+                        pic_path: item.pic_path
+                    });
+                    // 计算序号
+                    item.checkOrder = this.chooseList.length;
+                    // 修改状态
+                    item.ischeck = !0;
+                    return;
+                } else {
+                    this.$message.error('最多只能选择 ' + this.max + ' 张图片');
+                }
+            }
+            // 取消选中
+            // 找到在chooseList(选中)中的索引，
+            let i = this.chooseList.findIndex(v => v.pic_id === item.pic_id);
+            if (i === -1) return;
+            // 重新计算序号
+            let length = this.chooseList.length;
+            // 取消选中中间部分
+            if (i + 1 < length) {
+                // 重新计算imageList选中序号
+                for (let j = i; j < length; j++) {
+                    let no = this.imageList.findIndex(
+                        v => v.pic_id === this.chooseList[j].pic_id
+                    );
+                    if (no > -1) {
+                        this.imageList[no].checkOrder--;
+                    }
+                }
+            }
+            // 删除
+            this.chooseList.splice(i, 1);
+            // 修改状态
+            item.ischeck = !1;
+            // 重置序号
+            item.checkOrder = 0;
+        },
+        //图片上传成功
+        handlerUploadSuccess(err, file, fileList) {
+            this.page = 1;
+            this.getData();
+        },
+        //上传进度
+        handlerUploadProgress(event, file, fileList) {
+            console.log(
+                'handlerUploadProgress===========',
+                Math.floor(event.percent)
+            );
+        }
+    }
+});
+</script>
+<style scoped>
+.el-dialog__header {
+    background-color: #f7f7f7;
+    text-align: left;
+}
+
+.el-dialog__body {
+    padding: 10px !important;
+}
+
+#album .head {
+    padding: 0 0 10px 0;
+}
+
+#album .album-box {
+    width: 100%;
+}
+
+.album-list {
+    padding: 0px;
+    margin: 0px;
+
+    width: 180px;
+    min-height: 355px;
+    background-color: #f7f7f7;
+}
+
+.album-list li.active {
+    background-color: #e8e8e8;
+}
+
+.album-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    height: 50px;
+    list-style: none;
+    position: relative;
+    cursor: pointer;
+}
+
+.album-list-box {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overflow: auto;
+    overflow-x: hidden;
+    margin-right: 10px;
+    width: 180px;
+    height: 355px;
+    position: relative;
+}
+
+.album-img {
+    padding: 0px;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0px;
+    min-height: 310px;
+}
+
+.album-img li {
+    width: 125px;
+    height: 155px;
+    flex: 0 0 20%;
+    list-style: none;
+}
+
+.album-img li div {
+    width: 125px;
+    height: 125px;
+    border: 1px solid #fff;
+    line-height: 125px;
+    text-align: center;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.album-img li div img {
+    width: 121px;
+    height: 121px;
+    object-fit: scale-down;
+}
+
+.album-img li span {
+    display: block;
+    margin-top: 5px;
+    height: 20px;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.album-img li div .image-box-active {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-color: #ff6a00;
+    right: 0;
+}
+
+.album-img li div .image-box-active i {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    color: #fff;
+    z-index: 2;
+    font-style: normal;
+    line-height: 1;
+}
+
+.album-img li div .image-box-active:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0px;
+    right: 0;
+    border: 15px solid;
+    border-color: transparent;
+    border-top-color: #ff6a00;
+    border-right-color: #ff6a00;
+}
+
+.page {
+    margin: 10px 0 0 0;
+    display: flex;
+    justify-content: flex-end;
+    align-self: flex-end;
+}
+
+.el-divider--vertical {
+    height: 28px !important;
+}
+</style>

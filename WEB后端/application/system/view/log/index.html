@@ -1,0 +1,114 @@
+<div v-cloak id="app" class="main-content">
+    <one-table :option="tableOption" :data="tableData" :loading="loading" @current-change="handleCurrentChange"
+        @size-change="handleSizeChange">
+        <!-- 工具菜单 -->
+        <template slot="menuLeft">
+            <el-popconfirm confirm-button-text='好的' cancel-button-text='不用了' icon="el-icon-info" icon-color="red"
+                title="删除不能恢复,继续吗？" @confirm="clearLog">
+                <el-button slot="reference" size="mini" class="_tool" type="danger">
+                    <i class="el-icon-delete"></i>清空
+                </el-button>
+            </el-popconfirm>
+        </template>
+        <!-- 自定义列 -->
+        <template slot="status" slot-scope="scope">
+            {{scope.row.status}}
+            <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0"
+                @change="handleChange(scope.row)">
+            </el-switch>
+        </template>
+    </one-table>
+</div>
+{include file='common@components/one-table'}
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                loading: false,
+                tableData: [],
+                tableOption: {
+                    index: true,
+                    header: true,
+                    size: 'mini',
+                    page: {},
+                    column: [{
+                        label:'操作者',
+                        prop: 'uid',
+                        width: 160,
+                    }, {
+                        label:'操作地址',
+                        align:'left',
+                        prop: 'url'
+                    }, {
+                        label:'操作备注',
+                        prop: 'title',
+                        width: 160,
+                    }, {
+                        label:'操作统计',
+                        prop: 'count',
+                        width: 160,
+                    }, {
+                        label:'IP地址',
+                        prop:'ip',
+                        width:160,
+                    }, {
+                        label:'最近访问',
+                        prop:'update_time',
+                        width:160,
+                    }, ]
+                }
+            }
+        },
+       
+        created() {
+            this.getData()
+        },
+        methods: {
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.tableOption.page.currentPage = currentPage;
+                _this.getData();
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.tableOption.page.pageSize = val
+                _this.getData();
+            },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/log/index/',
+                        page: _this.tableOption.page.currentPage,
+                        limit: _this.tableOption.page.pageSize,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableData = e.data.data
+                    _this.tableOption.page.total = e.data.count;
+                })
+            },
+            //清空数据
+            clearLog() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/log/clear/',
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableOption.page.currentPage = 1;
+                    _this.getData();
+                })
+            },
+        }
+    })
+</script>

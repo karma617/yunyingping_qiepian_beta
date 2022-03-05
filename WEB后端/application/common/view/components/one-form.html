@@ -1,0 +1,94 @@
+<template id="one-form">
+    <div :class="" :loading="loading" element-loading-text="拼命加载中">
+        <!-- 表格功能列  -->
+        <header-menu flex="main:justify" ref="headerMenu" style="margin-bottom: 10px;">
+            <template slot="menuLeft">
+                <slot name="menuLeft"></slot>
+            </template>
+            <template slot="menuRight">
+                <slot name="menuRight"></slot>
+                <el-button icon="el-icon-refresh-right" circle :size="config.size || 'mini'" @click="resetField">
+                </el-button>
+            </template>
+        </header-menu>
+        <el-divider></el-divider>
+        <el-form status-icon :model="value" ref="ruleForm" :label-width="config.labelWidth || '100px'">
+            <el-row :gutter="10" v-for="(row, i) in columns" :key="i">
+                <el-col :span="24 / rowSize" v-for="(x, idx) in row" :key="idx">
+                    <el-form-item :label="x.label" :prop="x.prop" :size="config.size || 'small'" :rules="x.rules"
+                        :ref="x.prop" :style="x.style">
+                        <template slot='label' v-if="x.content">
+                            <span>{{x.label}}</span>
+                            <el-tooltip v-if="x.content" placement="top">
+                                <div slot="content" v-html="unEscapeHTML(x.content)"></div>
+                                <i class="el-icon-info"></i>
+                            </el-tooltip>
+                        </template>
+                        <slot v-if="x.slot" :name="x.prop" :row="x" :index="i"></slot>
+                        <slot v-if="x.type == 'image'" :name="'image'" :row="x" :index="i"></slot>
+                        <slot v-if="x.type =='richtext'" :name="x.prop" :row="x" :index="i"></slot>
+                        <el-input v-if="x.type == 'input'" :value="val[x.prop]" v-bind="x.bind || []"
+                            @input="setChaVal(x, $event)"></el-input>
+                        <el-input :rows="5" v-if="x.type === 'textarea'" type="textarea" :value="val[x.prop]"
+                            v-bind="x.bind || []" @input="setChaVal(x, $event)"></el-input>
+                        <el-select v-if="x.type=='select'" :value="val[x.prop]" v-bind="x.bind || []"
+                            @input="setChaVal(x, $event)">
+                            <el-option v-for="opt in x.options" :key="opt.value" :value="opt.value" :label="opt.label">
+                                {{opt.label}}
+                            </el-option>
+                        </el-select>
+                        <el-select v-if="x.type=='group-select'" :value="val[x.prop]" v-bind="x.bind || []"
+                            @input="setChaVal(x, $event)">
+                            <el-option-group v-for="group in x.options" :key="group.value" :label="group.label">
+                                <el-option v-for="item in group.options" :key="item.value" :label="item.label"
+                                    :value="item.value">
+                                </el-option>
+                            </el-option-group>
+                        </el-select>
+                        <el-cascader v-if="x.type=='cascader'" :value="val[x.prop]" v-bind="x.bind || []"
+                            @input="setChaVal(x, $event)"></el-cascader>
+                        <el-radio-group v-if="x.type=='radio'" :value="val[x.prop]" v-bind="x.bind || []"
+                            @input="setChaVal(x, $event)">
+                            <el-radio v-for="opt in x.options" :key="opt.value" :label="opt.value">{{opt.label}}
+                            </el-radio>
+                        </el-radio-group>
+                        <el-checkbox-group v-if="x.type=='checkbox'" :value="val[x.prop]" v-bind="x.bind || []"
+                            @input="setChaVal(x, $event)">
+                            <el-checkbox v-for="opt in x.options" :key="opt.value" :label="opt.value">{{opt.label}}
+                            </el-checkbox>
+                        </el-checkbox-group>
+                        <el-time-select v-if="x.type=='time'" :value="val[x.prop] || []" v-bind="x.bind || []" :picker-options="x.options"
+                            @input="setChaVal(x, $event)"></el-time-select>
+                        <el-date-picker
+                            v-if="['year', 'month', 'date', 'dates', 'week', 'datetime', 'datetimerang', 'daterange', 'monthrange'].includes(x.type)"
+                            :type="x.type" :value="val[x.prop]" v-bind="x.bind || []" @input="setChaVal(x, $event)">
+                        </el-date-picker>
+                        <el-switch v-if="x.type=='switch'" :value="s2i(val[x.prop])" :active-value="1"
+                            :inactive-value="0" v-bind="x.bind || []" @input="setChaVal(x, $event)"></el-switch>
+                        <template v-if="x.type=='btns'">
+                            <el-button v-for="(btn, index) in x.btns" :key="index" v-html="btn.label"
+                                v-bind="bindConfig(btn)" @click="btn.fn"></el-button>
+                        </template>
+                        <slot name="form-item-end" :row="x" :index="i"></slot>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+        </el-form>
+    </div>
+</template>
+<script>
+    "use strict"; function isJSON(t) { if ("string" == typeof t) try { var e = JSON.parse(t); return !("object" != (void 0 === e ? "undefined" : _typeof(e)) || !e) } catch (t) { return !1 } } var _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (t) { return typeof t } : function (t) { return t && "function" == typeof Symbol && t.constructor === Symbol && t !== Symbol.prototype ? "symbol" : typeof t }; Vue.component("one-form", { template: "#one-form", props: { loading: { type: Boolean }, value: { type: null }, config: { type: Object, required: !0 }, rootVal: { type: null }, parentVal: { type: null } }, data: function () { return { init: !0 } }, created: function () { }, mounted: function () { }, computed: { val: function () { if (this.init) { this.init = !1; var t = this.initVal(); return this.$emit("input", t), t } return this.value }, columns: function () { var t = this.config || {}, e = t.formdesc, n = void 0 === e ? [] : e, o = t.rowSize, r = void 0 === o ? 1 : o; return this.chunk(n, r) }, rowSize: function () { return this.config.rowSize || 1 }, _rootVal: function () { return this.rootVal ? this.rootVal : this.val }, _parentVal: function () { return this.parentVal ? this.parentVal : this.val } }, methods: { s2i: function (t) { return parseInt(t) }, initVal: function () { var t = this, e = this.config.formdesc, n = {}; e.forEach(function (e) { n[e.prop] = t.getValByType(e) }); var o = {}; return "object" == _typeof(this.value) && (o = this.value), o = Object.assign(n, o) }, getValByType: function (t) { if ("" != t.value) { var e = t.value; return isJSON(e) && (e = JSON.parse(e)), e } if ("checkbox" == t.type || "select" == t.type && t.multiple) return []; if ("select" == t.type && t.must && !t.multiple || "radio" == t.type && t.must) { for (var n = 0; n < t.options.length; n++)if (!t.options[n].disabled) return t.options[n].value; return "" } return "" }, chunk: function (t, e) { if (!t.length || e < 1) return []; var n = []; return t.forEach(function (t, o) { var r = Math.floor(o / e); n[r] instanceof Array || (n[r] = []), n[r].push(t) }), n }, setChaVal: function (t, e) { var n = Object.assign({}, this.val); n[t.prop] = e, this.$emit("input", n) }, resetField: function () { this.$refs.ruleForm.resetFields() } } });
+</script>
+<style>
+    .el-divider--horizontal {
+        margin: 10px 0;
+    }
+
+    .el-date-picker__editor-wrap .el-input {
+        width: 100% !important
+    }
+
+    .el-textarea,.el-input {
+	    width:350px;
+    }
+</style>

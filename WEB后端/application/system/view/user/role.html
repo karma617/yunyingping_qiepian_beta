@@ -1,0 +1,188 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <one-table :option="tableOption" :data="tableData" :loading="loading" @current-change="handleCurrentChange" @size-change="handleSizeChange">
+        <!-- 工具菜单 -->
+        <template slot="menuLeft">
+            <el-button type="primary" size="mini" @click="addRole(false,false)">添加</el-button>
+        </template>
+        <!-- 自定义列 -->
+        <template slot="status" slot-scope="scope">
+            <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0"
+                @change="changeSwitch(scope.row, scope.row)">
+            </el-switch>
+        </template>
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            <el-button type="primary" size="mini" class="_tool" @click="editRole(scope.row,scope.index, )">
+                <i class="el-icon-s-tools"></i> 权限
+            </el-button>
+            <el-button type="default" size="mini" :disabled="scope.row.system" class="_tool" @click="addRole(scope.row, scope.index)">
+                <i class="el-icon-edit"></i> 编辑
+            </el-button>
+            <el-popconfirm
+                confirm-button-text='好的'
+                cancel-button-text='不用了'
+                icon="el-icon-info"
+                icon-color="red"
+                title="删除不能恢复,确定删除吗？"
+                @confirm="handleDel(scope.row,scope.index)"
+            >
+            <el-button :disabled="scope.row.system" slot="reference" size="mini" class="_tool" type="danger">
+                <i class="el-icon-delete"></i> 删除
+            </el-button>
+            </el-popconfirm>
+        </template>
+    </one-table>
+</div>
+
+{include file='common@components/one-tabs'}
+{include file='common@components/one-table'}
+
+<script>
+    const _tabData= {:json_encode((array)$tabData, 1)} ;
+    new Vue({
+        el: '#app',
+        created(){
+            this.getData()
+        },
+        methods: {
+            // 切换标签
+            handleChange(item) {
+                window.location.href = item.url
+            },
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.tableOption.page.currentPage = currentPage;
+                _this.getData();
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.tableOption.page.pageSize = val
+                _this.getData();
+            },
+            //改变状态
+            changeSwitch(row) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/user/statusRole/',
+                        id: row.id,
+                        val: row.status,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                })
+            },
+            //添加编辑
+            addRole(row,index) {
+                let _this = this
+                let _promptTitle = row.id ? "编辑" : "添加"
+                let _url = row.id ? "system/user/editRole" : "system/user/addRole"
+                this.$prompt('', _promptTitle+'管理角色', {
+                    showClose: false,
+                    closeOnClickModal: false,
+                    inputValue:row.name || '',
+                    inputPattern: /^\S+[A-Za-z0-9_\u4e00-\u9fa5]+$/,
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                }).then((e) => {
+                    _this.loading = true
+                
+                    request({
+                        params: {
+                            s: _url
+                        },
+                        data: {'name':e.value,'id':row.id || 0},
+                        method: 'post'
+                    }).then(res => {
+                        _this.loading = false
+                        if(res.data.code == 0){
+                            if(_promptTitle == '添加'){
+                                _this.getData()
+                            }else{
+                                _this.tableData[index].name = e.value
+                            }
+                        }
+                    })
+                }).catch((res) => {
+                    _this.loading = false
+                })
+            },
+            //设置权限
+            editRole(row, index) {
+                navigateTo({
+                    s: 'system/user/editRole',
+                    id: row.id
+                })
+            },
+            //删除行
+            handleDel (row, index) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/user/delRole',
+                		id:row.id,
+                	},
+                	method: 'post'
+                }).then(e => {
+                    if(e.data.code == 0){
+                        _this.tableData.splice(index, 1)
+                    }
+                	_this.loading = false
+                }).catch((res) => {
+                    _this.loading = false
+                })
+            },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/user/role/',
+                        page: _this.tableOption.page.currentPage,
+                        limit: _this.tableOption.page.pageSize,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableData = e.data.data
+                    _this.tableOption.page.total = e.data.count;
+                })
+            },
+        },
+        data() {
+            return {
+                loading:false,
+                tabData: _tabData,
+                tableData: [],
+                tableOption: {
+                    index: true,
+                    header: true,
+                    selection: false,
+                    operates: {width: 200},
+                    page: {},
+                    size: 'mini',
+                    column: [{
+                            label: '状态',
+                            prop: 'status',
+                            width:80,
+                            slot: true,
+                        }, {
+                            label: '角色名称',
+                            prop: 'name'
+                        }, {
+                            label: '创建时间',
+                            prop: 'create_time'
+                        }
+                    ]
+                }
+            };
+        }
+    })
+</script>

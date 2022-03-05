@@ -1,0 +1,256 @@
+<template id="step3">
+    <div>
+        <el-row :gutter="20">
+            <el-col :span="12" style="height: 450px;">
+                <el-form :disabled="formDisable" :show-message="false" :model="ruleForm" ref="ruleForm"
+                    label-width="110px" size="small" class="demo-ruleForm">
+                    <el-form-item label="数据库地址" prop="dbhost" :rules="{required: true}">
+                        <el-input v-model="ruleForm.dbhost"></el-input>
+                        <span>数据库服务器地址，一般为127.0.0.1</span>
+                    </el-form-item>
+                    <el-form-item label="数据库端口" prop="dbport" :rules="{required: true}">
+                        <el-input v-model="ruleForm.dbport"></el-input>
+                        <span>系统数据库端口，一般为3306</span>
+                    </el-form-item>
+                    <el-form-item label="数据库名称" prop="dbname" :rules="{required: true}">
+                        <el-input v-model="ruleForm.dbname"></el-input>
+                        <span>系统数据库名,必须包含字母</span>
+                    </el-form-item>
+                    <el-form-item label="数据库用户名" prop="dbuser" :rules="{required: true}">
+                        <el-input v-model="ruleForm.dbuser"></el-input>
+                        <span>连接数据库的用户名</span>
+                    </el-form-item>
+                    <el-form-item label="数据库密码" prop="dbpass" :rules="{required: true}">
+                        <el-input v-model="ruleForm.dbpass"></el-input>
+                        <span>连接数据库的密码</span>
+                    </el-form-item>
+                    <el-form-item label="数据库前缀" prop="prefix" :rules="{required: true}">
+                        <el-input v-model="ruleForm.prefix"></el-input>
+                        <span>建议使用默认,数据库前缀必须带 '_'</span>
+                    </el-form-item>
+                    <el-form-item label="是否覆盖" prop="cover">
+                        <el-switch v-model="ruleForm.cover" :active-value="1" :inactive-value="0">
+                        </el-switch>
+                        <span>覆盖将不会保留数据</span>
+                    </el-form-item>
+                    <div flex="main:left">
+                        <el-form-item label="管理员帐号" prop="acname" :rules="{required: true}">
+                            <el-input v-model="ruleForm.acname"></el-input>
+                        </el-form-item>
+                        <el-form-item label="管理员密码" prop="acpwd" :rules="{required: true}">
+                            <el-input v-model="ruleForm.acpwd"></el-input>
+                        </el-form-item>
+                    </div>
+                    <el-button type="primary" v-if="!installDone" :disabled="btnDisable" :loading="btnLoading" @click="submitForm('ruleForm')"
+                        style="width:560px;position: absolute;bottom: 0px;">测试链接,完成后自动安装</el-button>
+                </el-form>
+                <el-button type="primary" v-if="installDone" @click="goAdministrator()"
+                        style="width:560px;position: absolute;bottom: 0px;">完成安装，进入管理后台</el-button>
+                <a class="target" refs="target" href="" target="_blank"></a>
+            </el-col>
+            <el-col :span="12">
+                <div class="info" id="message">
+                    <div v-for="item in consoleData">
+                        <strong :class="'text-'+item.type">{{item.time}} => </strong> <span>{{item.content}}</span>
+                    </div>
+                </div>
+            </el-col>
+
+        </el-row>
+
+    </div>
+    step3-flag:{{flag}}
+</template>
+<script>
+    Vue.component('step3', {
+        template: '#step3',
+        prop: ['active', 'fdata'],
+        data() {
+            return {
+                flag: false,
+                btnLoading: false,
+                btnDisable: false,
+                formDisable: false,
+                installDone: false,
+                consoleData: [],
+                logTimer: null,
+                ruleForm: {
+                    dbhost: '127.0.0.1',
+                    dbport: '3306',
+                    dbuser: '',
+                    dbname: '',
+                    dbpass: '',
+                    prefix: 'one_',
+                    cover: 0,
+                    acname: 'admin',
+                    acpwd: '',
+                },
+            }
+        },
+        created() {
+            this.$emit('flag', this.flag);
+            this.writeConsole('info', '请填写数据库相关信息,并点击测试按钮!');
+        },
+        methods: {
+            submitForm(formName) {
+                this.btnLoading = true;
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        this.writeConsole('info', '开始检测配置!');
+                        request({
+                            params: {
+                                s: 'index/step3',
+                            },
+                            method: 'post',
+                            data: this.ruleForm,
+                        }).then(e => {
+                            if (e.data.code == 0) {
+                                this.formDisable = true
+                                this.writeConsole('info', e.data.msg);
+                                this.setup()
+                            } else {
+                                this.btnLoading = false
+                                this.formDisable = false
+                            }
+                        }).catch(e => {
+                            this.btnLoading = false
+                            this.formDisable = false
+                        })
+                    } else {
+                        this.btnLoading = false
+                        this.writeConsole('danger', '配置信息错误,请注意左侧提示');
+                        return false;
+                    }
+                });
+            },
+            writeConsole: function (className, content) {
+                this.consoleData.push({
+                    content: content,
+                    type: className,
+                    time: this.getTime()
+                });
+                this.$nextTick(() => {
+                    var container = document.getElementById("message");
+                    container.scrollTop = container.scrollHeight;
+                });
+            },
+            getTime: function () {
+                var _this = this;
+                let yy = new Date().getFullYear();
+                let mm = new Date().getMonth() + 1;
+                let dd = new Date().getDate();
+                let hh = new Date().getHours();
+                let mf = new Date().getMinutes() < 10 ? '0' + new Date().getMinutes() : new Date()
+                    .getMinutes();
+                let ss = new Date().getSeconds() < 10 ? '0' + new Date().getSeconds() : new Date()
+                    .getSeconds();
+                return hh + ':' + mf + ':' + ss;
+            },
+            setup:function(){
+                request({
+                    params: {
+                        s: 'index/setup',
+                    },
+                    method: 'post',
+                    data: this.ruleForm,
+                })
+                this.getLog()
+            },
+            getLog:function() {
+                let _this = this
+                let _start = 1,
+                    _limit = 10
+                _this.logTimer = setInterval(() => {
+                    request({
+                        params: {
+                            s: 'index/read_log',
+                        },
+                        data: {
+                            'start': _start,
+                            'limit': _limit
+                        },
+                        method: 'post',
+                    }).then(e => {
+                        let _data = e.data.data
+                        if (_data.msg != 'false') {
+                            _start += _data.length
+                            _data.map((v, i, a) => {
+                                if ('done' == v) {
+                                    clearInterval(_this.logTimer);
+                                    _this.logTimer = null;
+                                    _this.installDone = true;
+                                    _this.installEnd();
+                                }
+                                _this.writeConsole('info', v);
+                            })
+                        }
+                    })
+                }, 1000)
+
+            },
+            installEnd(){
+                request({
+                    params: {
+                        s: 'index/installDone',
+                    },
+                    data: {},
+                    method: 'get',
+                })
+            },
+            goAdministrator () {
+                if (this.installDone) {
+                    window.location.href = '/admin.php';
+                }
+            }
+        },
+        mounted() {
+            // this.timer = setInterval(()=>{
+            //     this.writeConsole('info', '请填写数据库相关信息请填写数据库相关信息请填写数据库相关信息请填写数据库相关信息请填写数据库相关信息请填写数据库相关信息')
+            // },100)
+        }
+
+    })
+</script>
+<style>
+    .el-input {
+        width: 170px;
+    }
+
+    .el-form-item__content span {
+        color: #666
+    }
+
+    .info {
+        border: 1px solid #DCDFE6;
+        height: 450px;
+        overflow: hidden;
+        overflow-y: auto;
+        font-size: 14px;
+        padding: 5px;
+        background-color: #333;
+        color: #FFF;
+    }
+
+    .info::-webkit-scrollbar {
+        width: 6px;
+        background-color: #FFF;
+    }
+
+    .info::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background-color: #494E51;
+    }
+
+    .info::-webkit-scrollbar-track {
+        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+        background-color: #F5F5F5;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-info {
+        color: #009900 !important;
+    }
+</style>

@@ -1,0 +1,118 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <one-table :option="tableOption" ref="table" :data="tableData" :loading="loading" @current-change="" @size-change="">
+       
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            <el-button size="mini"  class="_tool" @click="getIds(scope.row,'system/database/import',null)">
+                恢
+            </el-button>
+            <el-popconfirm
+            confirm-button-text='好的'
+            cancel-button-text='不用了'
+            icon="el-icon-info"
+            icon-color="red"
+            title="删除不能恢复,确定删除吗？"
+            @confirm="getIds(scope.row,'system/database/del',scope.index)"
+        >
+        <el-button slot="reference" size="mini" class="_tool" type="danger">
+            <i class="el-icon-delete"></i>
+        </el-button>
+        </el-popconfirm>
+        </template>
+    </one-table>
+</div>
+
+{include file='common@components/one-tabs'}
+{include file='common@components/one-table'}
+
+<script>
+    const _tabData= {:json_encode((array)$tabData, 1)} ;
+    new Vue({
+        el: '#app',
+        created(){
+            this.getData()
+        },
+        methods: {
+            // 切换标签
+            handleChange(item) {
+                window.location.href = item.url
+            },
+            //获取选择的ID
+            getIds(row,url,index){
+                let ids = []
+                ids = row.id
+                if(ids.length ==0){
+                    this.$message.error('请先选择要操作的数据')
+                    return false
+                }else{
+                    if(ids){
+                    let _this = this
+                    _this.loading = true
+                    request({
+                        params: {
+                            s: url,
+                            id:ids
+                        },
+                        method: 'post'
+                    }).then((e)=>{
+                        _this.loading = false
+                        if(e.data.code ==0 && index !=null){
+                            _this.tableData.splice(index, 1)
+                        }
+                    })
+                }
+                }
+                
+            },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/database/index/',
+                        group:_this.tabData.current,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableData = e.data.data
+                })
+            },
+        },
+        data() {
+            return {
+                loading:false,
+                tabData: _tabData,
+                tableData: [],
+                tableOption: {
+                    index: true,
+
+                    operates: {width: 100},
+                    page: false,
+                    size: 'mini',
+                    column: [{
+                            label: '备份名称',
+                            prop: 'name',
+                            width:250,
+                        }, {
+                            label: '备份卷数',
+                            width:150,
+                            prop: 'part'
+                        }, {
+                            label: '备份压缩',
+                            prop: 'compress'
+                        }, {
+                            label: '备份大小',
+                            prop: 'size',
+                        }, {
+                            label: '备份时间',
+                            prop: 'time',
+                        }
+                    ]
+                }
+            };
+        }
+    })
+</script>

@@ -1,0 +1,230 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <div slot='menuLeft' flex="main:left">
+        <el-button type="primary" size="small" @click="createModel">生成模块</el-button>
+    </div>
+    <one-table :option="tableOption" :data="tableData" :loading="loading" @current-change="" @size-change="">
+        <!-- 自定义列 -->
+        <template slot="default" slot-scope="scope">
+            <el-switch  :value="scope.row.default" :active-value="1" :inactive-value="0"
+                @change="changeDefault(scope.row, scope.index)">
+            </el-switch>
+        </template>
+        <template slot="name" slot-scope="scope" >
+            <div flex="main:left">
+                <el-image style="width: 70px; height: 70px" :src="scope.row.icon" fit="fit"></el-image>
+                <div flex="dir:top main:justify" style="margin-left: 10px;">
+                    <div>{{scope.row.title}}</div>
+                    <div>作者:{{scope.row.author}}</div>
+                    <div>简介:{{scope.row.intro}}</div>
+                </div>
+            </div>
+        </template>
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            
+            <template v-if="scope.row.status==0">
+                <el-button  type="primary"  plain size="mini"  class="_tool" @click="install(1,scope.row, scope.index)">
+                    <i class="el-icon-upload2"></i>安装
+                </el-button>
+               
+                <el-popconfirm
+                    confirm-button-text='好的'
+                    cancel-button-text='不用了'
+                    icon="el-icon-info"
+                    icon-color="red"
+                    title="删除不能恢复,确定删除吗？"
+                    @confirm="install(2,scope.row, scope.index)"
+                >
+                <el-button plain slot="reference" size="mini" class="_tool" type="danger">
+                    <i class="el-icon-delete"></i>删除
+                </el-button>
+                </el-popconfirm>
+            </template>
+            <template v-if="scope.row.status==1">
+                <el-button  type="primary"  plain size="mini"  class="_tool" @click="changeSwitch(scope.row, scope.index,2)">
+                    <i class="el-icon-video-play"></i>启用
+                </el-button>
+                <el-button  type="danger"  plain size="mini"  class="_tool" @click="install(0,scope.row, scope.index)">
+                    <i class="el-icon-delete"></i>卸载
+                </el-button>
+            </template>
+            <template v-if="scope.row.status==2">
+                <el-button  type="info"  plain size="mini"  class="_tool" @click="navigateTo(_scriptUrl + '/system/module/editor/id/' + scope.row.id)">
+                    <i class="el-icon-setting"></i>配置
+                </el-button>
+                <el-popconfirm
+                    confirm-button-text='好的'
+                    cancel-button-text='不用了'
+                    icon="el-icon-info"
+                    icon-color="red"
+                    title="重置数据库外的所有配置,需要谨慎操作"
+                    @confirm="reinstall(scope.row, scope.index)"
+                >
+                <el-button slot="reference" type="primary" plain size="mini"  class="_tool" @click="">
+                    <i class="el-icon-refresh"></i>重载
+                </el-button>
+                </el-popconfirm>
+                <el-button  type="warning"  plain size="mini"  class="_tool" @click="changeSwitch(scope.row, scope.index,1)">
+                    <i class="el-icon-video-pause"></i>停用
+                </el-button>
+            </template>
+        
+        </template>
+    </one-table>
+</div>
+
+{include file='common@components/one-tabs'}
+{include file='common@components/one-table'}
+
+<script>
+    const _tabData= {:json_encode((array)$tabData, 1)} ;
+    new Vue({
+        el: '#app',
+        created(){
+            this.getData()
+        },
+        methods: {
+            // 切换标签
+            handleChange(item) {
+                window.location.href = item.url
+            },
+            //改变状态
+            changeSwitch(row,index,val) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/module/status/',
+                        id: row.id,
+                        val: val,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    this.getData()
+                })
+            },
+            //改变默认
+            changeDefault(row) {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/module/setDefault/',
+                        id: row.id,
+                        val: 1-row.default,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    this.getData()
+                })
+            },
+           //安装卸载
+           install(action,row,index){
+                let _this = this,url='system/module/install'
+                _this.loading = true
+                //卸载
+                if(0 == action){
+                    url = 'system/module/uninstall'
+                }
+                //删除
+                if(2 == action){
+                    url = 'system/module/del'
+                }
+                request({
+                    params: {
+                        s: url,
+                    },
+                    data:{'id':row.id,'clear':1},
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    this.getData()
+                })
+           },
+           //重置
+           reinstall(row,index){
+                let _this = this,url='system/module/reinstall'
+                _this.loading = true
+                request({
+                    params: {
+                        s: url,
+                    },
+                    data:{'id':row.id},
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    this.getData()
+                })
+
+           },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/module/index/',
+                    },
+                    data:{'status':_this.tabData.val},
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    //处理图片刷新
+                    e.data.data.map((v,i,a)=>{
+                        if(v.icon.length >0){
+                            return v.icon+='?t='+randomString()
+                        }
+                    })
+                    _this.tableData = e.data.data
+                    //非正常状态隐藏列
+                    if(!(_this.tabData.val ==2)){
+                        _this.tableOption.column[0].hide = true
+                    }
+                   
+                })
+            },
+            createModel () {
+                let _this = this
+                navigateTo({
+                    s: 'system/module/design',
+                })
+            }
+        },
+        data() {
+            return {
+                loading:false,
+                tabData: _tabData,
+                tableData: [],
+                tableOption: {
+                    index: true,
+                    header: {
+                        refresh: false
+                    },
+                    selection: false,
+                    operates: {width: 200},
+                    page: false,
+                    size: 'mini',
+                    column: [{
+                            label: '是否默认',
+                            prop: 'default',
+                            width:80,
+                            slot: true,
+                        }, {
+                            label: '模块信息',
+                            align:'left',
+                            prop: 'name',
+                            slot: true,
+                        }, {
+                            label: '版本',
+                            width:100,
+                            prop: 'version'
+                        }
+                    ]
+                }
+            };
+        }
+    })
+</script>

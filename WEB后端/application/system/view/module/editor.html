@@ -1,0 +1,143 @@
+<div v-cloak id="app" class="main-content">
+    <header-menu flex="main:left" ref="headerMenu" style="margin-bottom: 10px;">
+        <el-button class="button-item" :loading="loading" type="primary" @click="store" size="small">
+            保存(S)
+        </el-button>
+        <el-button size="small" @click="navigateTo(_scriptUrl + '/system/module/index')">返回</el-button>
+       
+    </header-menu>
+    <el-divider></el-divider>
+    <div flex="main:left;box:first;" style="height:calc(100vh - 110px);">
+        <div class="diy-left-menu"  style="width:200px">
+            <el-menu
+            default-active="1"
+            class="el-menu-vertical-demo"
+            @select="handleSelect"
+            >
+            <el-menu-item v-for="(item,index) in _edit" :index="index">
+                <div slot="title" style="padding-top:10px;">{{item.name}} <div style="color: #ccc;font-size: 12px;">{{item.file}}</div></div>
+            </el-menu-item>
+            </el-menu>
+        </div>
+        <div ref="editor" style="flex-grow: 1;" :id="id"></div>
+    </div>
+    
+   
+    
+
+</div>
+{include file='common@components/one-form'}
+<script src="__STATIC__/lib/ace@1.4.12/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="__STATIC__/lib/ace@1.4.12/ext-beautify.js" type="text/javascript" charset="utf-8"></script>
+<script src="__STATIC__/lib/ace@1.4.12/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+
+<script>
+    const _edit = {:json_encode($edit)};
+    const _id = {$id};
+    const app = new Vue({
+        el: '#app',
+        data() {
+            this.editor = null;
+            this.id = 'aceEditor'
+            this.menuKey = 0;
+            return {
+                height: '400px'
+                ,loading:false
+                ,fileChangeStat:0
+            }
+        },
+        created() {},
+        mounted() {
+            this.initEditor()
+        },
+        methods: {
+            initEditor() {
+                let _this = this
+                this.editor = ace.edit(this.id, {
+                    theme: "ace/theme/chrome", //主题
+                    mode: "ace/mode/php", // 语言类型
+                    wrap: true, //换行
+                    showInvisibles: true, //显示不可见字符
+                    showPrintMargin: false, //显示打印边距
+                    enableBasicAutocompletion: true, //启用基本自动完成
+                    enableSnippets: true, //启用代码段
+                    enableLiveAutocompletion: true, //启用实时自动完成
+                    useSoftTabs: true, //使用软标签
+                    tabSize: 4, //标签大小
+                    keyboardHandler: 'sublime', //键盘事件
+                    readOnly: false // false为可编辑
+                });
+
+                this.editor.resize(); //设置自适应
+                //编辑时同步数据
+                this.editor.session.on('change', (ev) => {
+                    this.code = this.editor.getValue()
+                    this.fileChangeStat = 1
+                })
+                //字体大小
+                this.editor.setFontSize(14)
+                this.syncData()
+                //this.syncOptions()
+                this.editor.commands.addCommand({
+                    name: '保存文件',
+                    bindKey: {
+                        win: 'Ctrl-S',
+                        mac: 'Command-S'
+                    },
+                    exec: function (editor) {
+                        _this.store();
+                    },
+                    // readOnly: false // 如果不需要使用只读模式，这里设置false
+                });
+            },
+            syncData() {
+                this.editor.setValue(_edit[this.menuKey].content)
+                this.editor.moveCursorTo(0, 0); //设置鼠标焦点
+                this.editor.focus(); //设置焦点
+                this.fileChangeStat = 0
+            },
+            handleSelect(key, keyPath) {
+                this.menuKey = key
+                this.syncData()
+            },
+            store() {
+                let _this = this;
+                if(0 == this.fileChangeStat){
+                    _this.$message.info('当前文件未修改，无需保存!');
+                    return false
+                }
+                _this.loading = true;
+                let postData = {
+                    'id':_id
+                    ,'key':_this.menuKey
+                    ,'val':this.code
+                }
+                let _s = 'system/module/editor'
+                request({
+                    params: {
+                        s: _s,
+                    },
+                    method: 'post',
+                    data: postData
+                }).then(e => {
+                    _this.loading = false;
+                    if (e.data.code == 0) {
+                        _this.$message.success(e.data.msg);
+                        _this.fileChangeStat = 0
+                    } else {
+                        _this.$message.error(e.data.msg);
+                    }
+                })
+            },
+        },
+    });
+</script>
+<style>
+    .el-menu-vertical-demo:not(.el-menu--collapse) {
+      width: 200px;
+      min-height: 400px;
+    }
+    .diy-left-menu .el-menu-item {
+        line-height:20px!important;
+    }
+  </style>

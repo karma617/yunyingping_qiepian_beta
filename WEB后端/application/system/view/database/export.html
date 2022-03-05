@@ -1,0 +1,117 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <one-table :option="tableOption" ref="table" :data="tableData" :loading="loading" @current-change="" @size-change="">
+        <!-- 工具菜单 -->
+        <template slot="menuLeft">
+            <el-button-group >
+                <el-button type="primary" size="mini" @click="getIds(null,'system/database/export')">备份</el-button>
+                <el-button type="primary" size="mini" @click="getIds(null,'system/database/optimize')">优化</el-button>
+                <el-button type="primary" size="mini" @click="getIds(null,'system/database/repair')">修复</el-button>
+              </el-button-group>
+        </template>
+        <!-- 自定义操作列 -->
+        <template slot="operates" slot-scope="scope">
+            <el-button size="mini"  class="_tool" @click="getIds(scope.row,'system/database/export')">
+                备
+            </el-button>
+            <el-button size="mini"  class="_tool" @click="getIds(scope.row,'system/database/optimize')">
+                恢
+            </el-button>
+            <el-button size="mini"  class="_tool" @click="getIds(scope.row,'system/database/repair')">
+                修
+            </el-button>
+        </template>
+    </one-table>
+</div>
+
+{include file='common@components/one-tabs'}
+{include file='common@components/one-table'}
+
+<script>
+    const _tabData= {:json_encode((array)$tabData, 1)} ;
+    new Vue({
+        el: '#app',
+        created(){
+            this.getData()
+        },
+        methods: {
+            // 切换标签
+            handleChange(item) {
+                window.location.href = item.url
+            },
+            //获取选择的ID
+            getIds(row,url){
+                let ids = []
+                const _selectData = this.$refs.table.$refs['one-table'].selection
+                ids = null == row ? array_column(_selectData,'id') : array_column([row],'id')
+                if(ids.length ==0){
+                    this.$message.error('请先选择要操作的数据')
+                    return false
+                }else{
+                    if(ids){
+                    let _this = this
+                    _this.loading = true
+                    request({
+                        params: {
+                            s: url,
+                            id:ids
+                        },
+                        method: 'post'
+                    }).then((e)=>{
+                        _this.loading = false
+                    })
+                }
+                }
+                
+            },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'system/database/index/',
+                        group:_this.tabData.current,
+                        page: _this.page,
+                        limit: _this.limit,
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableData = e.data.data
+                })
+            },
+        },
+        data() {
+            return {
+                loading:false,
+                tabData: _tabData,
+                tableData: [],
+                tableOption: {
+                    index: true,
+                    header: true,
+                    selection: true,
+                    operates: {width: 120},
+                    page: false,
+                    size: 'mini',
+                    column: [{
+                            label: '表名',
+                            prop: 'Name',
+                            width:250,
+                        }, {
+                            label: '数据量',
+                            width:150,
+                            prop: 'Rows'
+                        }, {
+                            label: '冗余',
+                            prop: 'Data_free'
+                        }, {
+                            label: '备注',
+                            prop: 'Comment',
+                        }
+                    ]
+                }
+            };
+        }
+    })
+</script>

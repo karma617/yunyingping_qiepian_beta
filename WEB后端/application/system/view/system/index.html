@@ -1,0 +1,130 @@
+<div v-cloak id="app" class="main-content">
+    <div class="form-body">
+        <one-tabs :option="tabData" @change="tabsHandleClick"></one-tabs>
+        <one-form :config.sync="config" :loading="loading" v-model="fdata" ref="ruleForm">
+            <template slot='form-item-end' slot-scope="scope">
+                <span style="left:400px;position: absolute;font-size:12px">调用: <span style="color:#00c250">{{scope.row.tip}}</span></span>
+            </template>
+            <div slot='menuLeft' v-if="group != 'main'">
+                <el-button class="button-item" :loading="loading" type="primary" @click="store('ruleForm')" size="small">
+                    保存
+                </el-button>
+            </div>
+            <!-- 上传图片 -->
+            <template slot="image" slot-scope="scope">
+                <one-upload class="one-attachment-simple-upload" v-loading="uploading" :disabled="uploading"
+                    :accept="'image'"
+                    @success="uploadSuccess($event,scope.row.prop)"
+                    flex="main:left cross:center">
+                    <el-avatar fit="scale-down" shape="square" size="60" :src="fdata[scope.row.prop]"></el-avatar>
+                </one-upload>
+            </template>
+        </one-form>
+        
+    </div>
+</div>
+{include file='common@components/one-tabs'}
+{include file='common@components/one-form'}
+{include file='common@components/one-upload'}
+<script>
+    const _formData= {:json_encode((array)$formData, 1)} ;
+    const _tabData= {:json_encode((array)$tabData, 1)} ;
+    const app = new Vue({
+        el: '#app',
+        data() {
+
+            return {
+                uploading:false,
+                loading:false,
+                tabData:_tabData,
+                config: {
+                    formdesc: [],
+                    data:{},
+                    labelWidth:'200px',
+                    rowSize: 1, //一行可以展示几列表单，默认为3列
+                },
+                fdata:{}
+            }
+        },
+
+        created() {
+            this.group = _tabData.current
+        },
+        mounted(){
+            let _this = this
+            let _tmp = {}
+            _formData.map((v,i,a)=>{
+                _this.config.formdesc.push({
+                    'label':v.title,
+                    'prop':v.name,
+                    'value':v.value ,
+                    'type':v.type,
+                    'options':v.options,
+                    'content':v.tips,
+                    'tip':'config("'+v.group+'.'+v.name+'")',
+                })
+                let _key = v.id
+            })
+        },
+        methods: {
+            //表单验证
+            getFormPromise(form) {
+                return new Promise(resolve => {
+                    form.validate(res => {
+                        resolve(res);
+                    })
+                })
+            },
+            store(formName) {
+                let _this = this;
+                // 获取到组件中的form
+                const configForm = this.$refs.ruleForm.$refs.ruleForm;
+                // 使用Promise.all去校验结果,可加入多个表单
+                Promise.all([configForm].map(this.getFormPromise)).then(res => {
+                    const validateResult = res.every(item => !!item);
+                    if (validateResult) {
+                        _this.loading = true;
+                        let postData = {
+                            'group':_this.group,
+                            'module':_tabData.module || "",
+                            'data':_this.fdata
+                        }
+                        request({
+                            params: {
+                                s: 'system/system/save_config',
+                                group:_this.group
+                            },
+                            method: 'post',
+                            data: postData
+                        }).then(e => {
+                            _this.loading = false;
+                            if (e.data.code == 0) {
+                                //修改可不跳转
+                                if(e.data.url){
+                                    window.location.href = e.data.url
+                                }
+                            } else {
+                                _this.$message.error(e.data.msg);
+                            }
+                        })
+
+                    } else {
+                        console.log('表单未校验通过');
+                    }
+                })
+                
+            },
+           // 切换tab
+           tabsHandleClick(e) {
+                window.location.href = e.url;
+            },
+            //图片上传完成
+            uploadSuccess(file,prop){
+                file=file.response.data.data.file
+                this.fdata[prop] = file
+            },
+
+        },
+
+    });
+</script>

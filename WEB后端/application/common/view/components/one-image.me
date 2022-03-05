@@ -1,0 +1,57 @@
+# 正常使用
+<one-img-cell
+    v-model="item.imgUrl"
+    :img-cell-item-style="{width:'100px',height: '100px',}"
+    :max="1"
+    :delShow:true
+></one-img-cell>
+# form-create 嵌入初始化
+<script>
+    //组件
+    formCreate.component('oneImgCell', {
+        data: function () {
+            return {
+                inputValue: '',
+            }
+        },
+        render($h){
+            let _this = this
+            return $h('one-img-cell',{
+                props:{
+                    imgCellItemStyle:{width:'100px',height: '100px',},
+                    max:"1",
+                    delShow:true,
+                    value:_this.inputValue
+                },
+                domprops:{
+                    value:_this.input
+                },
+                on:{
+                    input:(e)=>{
+                        _this.$emit('input',e[0])   
+                    }    
+                }    
+            },[])
+        },
+        props:{
+            value:String,
+        },
+        watch:{
+            value : {
+                handler () {
+                    this.inputValue = this.value
+                },
+                // immediate: true //立即触发该监听
+            }
+        },
+        methods: {},
+        mounted(){}
+    })
+</script>
+# form-create 嵌入初使用
+{
+	"field": 'img',
+	"title": '图示',
+	"type": "oneImgCell",
+	"value":''
+}

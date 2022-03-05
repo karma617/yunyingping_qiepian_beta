@@ -1,0 +1,134 @@
+<div v-cloak id="app" class="main-content">
+    <one-tabs :option="tabData" @change="handleChange"></one-tabs>
+    <!-- 工具菜单 -->
+    
+    <one-table :option="tableOption" :data="tableData" :loading="loading" @current-change="handleCurrentChange"
+        @size-change="handleSizeChange">
+        <template slot="menuLeft">
+            <el-checkbox v-model="status" @change="reGetData">显示未支付</el-checkbox>
+        </template>
+        <!-- 自定义列 -->
+        <template slot="method" slot-scope="scope">
+            {{_payment[scope.row.method] || '---'}}
+        </template>
+        <template slot="status" slot-scope="scope">
+            {{scope.row.status == 1 ? '待支付' : '已支付'}}
+        </template>
+    </one-table>
+</div>
+
+{include file='common@components/one-tabs'}
+{include file='common@components/one-table'}
+<script>
+    const _tabData = {:json_encode($tabData, 1)};
+    const _payment = {:json_encode($payment, 1)};
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                status:true,
+                loading: false,
+                tabData: _tabData,
+                filter: {},
+                tableData: [],
+                tableOption: {
+                    index: true,
+                    header: true,
+                    size: 'mini',
+                    page: {},
+                    column: [{
+                        label: '用户标识',
+                        prop: 'uid',
+                        width: 90,
+                    }, {
+                        label: '支付平台',
+                        align: 'left',
+                        prop: 'method',
+                        slot:true,
+                        width: 150,
+                    }, {
+                        label: '订单号',
+                        prop: 'order_no',
+                        width: 260,
+                    }, {
+                        label: '交易金额',
+                        prop: 'money',
+                        width: 110,
+                    }, {
+                        label: '交易状态',
+                        prop: 'status',
+                        slot:true,
+                        width: 120,
+                    }, {
+                        label: '支付平台交易号',
+                        prop: 'trade_no',
+
+                    }, {
+                        label: '创建时间',
+                        prop: 'create_time',
+                        width: 160,
+                    }, {
+                        label: '更新时间',
+                        prop: 'update_time',
+                        width: 160,
+                    }, ]
+                }
+            }
+        },
+
+        created() {
+            this.getData()
+        },
+        methods: {
+            //分页
+            handleCurrentChange(currentPage) {
+                let _this = this;
+                _this.tableOption.page.currentPage = currentPage;
+                _this.getData();
+            },
+            //每页显示数
+            handleSizeChange(val) {
+                let _this = this;
+                _this.tableOption.page.pageSize = val
+                _this.getData();
+            },
+            //勾选后从第一页查询
+            reGetData(){
+                let _this = this;
+                _this.tableOption.page.currentPage = 1
+                _this.getData();
+            },
+            // 获取数据
+            getData() {
+                let _this = this
+                _this.loading = true
+                request({
+                    params: {
+                        s: 'one_pay/logs/index/',
+                        page: _this.tableOption.page.currentPage,
+                        limit: _this.tableOption.page.pageSize,
+                        status: this.status == false ? 2 : false
+                    },
+                    method: 'post'
+                }).then(e => {
+                    _this.loading = false
+                    _this.tableData = e.data.data
+                    _this.tableOption.page.total = e.data.count;
+                })
+            },
+            // 切换标签
+            handleChange(item) {
+                window.location.href = item.url
+            },
+           
+        }
+    })
+</script>
+<style>
+    .el-input {
+        position: relative;
+        font-size: 14px;
+        display: inline-block;
+        width: auto;
+    }
+</style>
